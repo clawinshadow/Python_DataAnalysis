@@ -3,11 +3,17 @@ import numpy as np
 import scipy.stats as sp
 
 print('''
+  设随机变量 X ~ N(0, 1), Y ~ χ2(n), 且X与Y独立，则
+  t = X /sqrt(Y/n) ~ t(n), 主要用于小样本理论
+  
   Assume X ~ T(df),
                                  gamma((df+1)/2)
   t.pdf(x, df) = ---------------------------------------------------
                  sqrt(pi*df) * gamma(df/2) * (1+x**2/df)**((df+1)/2)
-                 
+
+  E(t) = 0, when n > 1
+  D(t) = n/(n-2), when n > 2
+  
   To shift and/or scale the distribution use the loc and scale parameters.
   Specifically, t.pdf(x, df, loc, scale) is identically equivalent to
   t.pdf(y, df) / scale with y = (x - loc) / scale.
