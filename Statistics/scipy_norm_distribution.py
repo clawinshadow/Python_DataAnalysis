@@ -48,3 +48,6 @@ print('{0:-^60}'.format('Seperate Line'))
 
 print('sf(1.8): ', rv.sf(1.96))  # survival function(used in hypothesis)  
 
+# 置信区间估计(双侧检验)
+print('Confidence interval estimation(bilateral testing): 90%', rv.interval(0.90))
+print('Confidence interval estimation(bilateral testing): 95%', rv.interval(0.95))
