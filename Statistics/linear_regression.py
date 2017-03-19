@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.stats as st
 import math
+from sklearn import linear_model
+
 '''
 主要包括一元线性回归的相关统计分析
 估计的回归方程：y = beta0 + beta1 * x
@@ -151,10 +153,29 @@ def linear_regression(x, y, alpha, x0=0):
         'Residual', sse.round(6), n-2, mse.round(6))) # 残差
     print('{0:^15}|{1:^15}|{2:^10}|'.format('Total', sst.round(6), n-1)) # 总计
 
+
+def linear_regression_brief(x, y):
+    '''
+    使用sklearn.linear_model.LinearRegression来实现最小二乘法的线性回归
+
+    Parameter: x 必须是一个R(m*n)矩阵，并且m > n, 必须是超定的矩阵
+               y 是一个一维数组，长度与m一致，为观测值集合
+    
+    Docs:http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html
+    '''
+    reg = linear_model.LinearRegression()
+    x = np.array(x)
+    x = x[:, np.newaxis]
+    reg.fit(x, y)
+    print('coefficients: ', reg.coef_)
+    print('intercept: ', reg.intercept_)
+    # print('residues: ', reg.residues_)    # deprecated
+    print('R Square: ', reg.score(x, y))
+
 y = [0.9,1.1,4.8,3.2,7.8,2.7,1.6,12.5,1.0,2.6,0.3,4.0,0.8,3.5,10.2,3.0,\
      0.2,0.4,1.0,6.8,11.6,1.6,1.2,7.2,3.2]
 x = [67.3,111.3,173,80.8,199.7,16.2,107.4,185.4,96.1,72.8,64.2,132.2,58.6,\
      174.6,263.5,79.3,14.8,73.5,24.7,139.4,368.2,95.7,109.6,196.2,102.2]
 pearson(x, y)
 linear_regression(x, y, 0.05, x0=100)
-
+linear_regression_brief(x, y)
