@@ -2,6 +2,7 @@ import numpy as np
 import scipy.stats as st
 import math
 from sklearn import linear_model
+import matplotlib.pyplot as plt
 
 '''
 主要包括一元线性回归的相关统计分析
@@ -171,6 +172,13 @@ def linear_regression_brief(x, y):
     print('intercept: ', reg.intercept_)
     # print('residues: ', reg.residues_)    # deprecated
     print('R Square: ', reg.score(x, y))
+
+    plt.scatter(x, y, color='blue')
+    plt.plot(x, reg.predict(x), color='green', linewidth=3)
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.show()
+    
 
 y = [0.9,1.1,4.8,3.2,7.8,2.7,1.6,12.5,1.0,2.6,0.3,4.0,0.8,3.5,10.2,3.0,\
      0.2,0.4,1.0,6.8,11.6,1.6,1.2,7.2,3.2]
