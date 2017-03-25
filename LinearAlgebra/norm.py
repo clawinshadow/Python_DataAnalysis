@@ -46,5 +46,21 @@ print('LA.norm(b, -np.inf): ', LA.norm(b, -np.inf))
 print('LA.norm(a, 1): ', LA.norm(a, 1))
 print('LA.norm(b, 1): ', LA.norm(b, 1))
 
+# 向量的-1维范数即每个分量的-1次方之和再-1次方
+# 矩阵的-1维范数与一维范数相反，每一列的绝对值之和的最小值 3 + 3
+print('LA.norm(a, -1): ', LA.norm(a, -1))
+print('LA.norm(b, -1): ', LA.norm(b, -1))
+
+# 向量的n维范数即每个分量绝对值的n次方之和再开n次方
+print('LA.norm(a, 2): ', LA.norm(a, 2))
+print('math.pow(np.sum(abs(a)**2), 1/2): ', math.pow(np.sum(abs(a)**2), 1/2))
+print('LA.norm(a, 3): ', LA.norm(a, 3))
+print('math.pow(np.sum(abs(a)**3), 1/3): ', math.pow(np.sum(abs(a)**3), 1/3))
+
+# using the axis argument
+c = np.array([[ 1, 2, 3],
+              [-1, 1, 4]])
+print('LA.norm(c, axis=0): ', LA.norm(c, axis=0)) # 计算每一列的范数
+print('LA.norm(c, axis=1): ', LA.norm(c, axis=1)) # 计算每一行的范数
 
 
