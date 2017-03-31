@@ -53,3 +53,8 @@ b = np.array([5,6]) #1D array
 print('b: ', b)
 print('b.T: \n', b.T)  #not matrix transpose!
 print('A.dot(b.T): \n', A.dot(b.T))  #does not matter for multiplication
+
+print('{0:-^60}'.format('Seperate Line'))
+a = np.array([[1, 2], [3, 4]])
+print('a: \n', a)
+print('det(a): ', sl.det(a))
