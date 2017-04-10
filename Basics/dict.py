@@ -1,3 +1,5 @@
+import operator
+
 '''
 demos about built-in type: dict
 because it's very frequently used in data analysis & machine-learning
@@ -101,3 +103,8 @@ print('d: ', d)
 d.update(four=4, five=5)
 print('d: ', d)
 
+# sorted dict
+sd = sorted(iter(d.values()), reverse=True)
+sd2 = sorted(iter(d.items()), key=operator.itemgetter(1), reverse=True)
+print(sd)
+print(sd2)
