@@ -1,6 +1,7 @@
 import numpy as np
 import operator
 import matplotlib.pyplot as plt
+from sklearn.neighbors import KNeighborsClassifier
 
 '''
 kNN算法的简单示例
@@ -38,8 +39,14 @@ def classify(inX, dataSet, labels, k):
 
 group, labels = createDataSet()
 inX = [0.2, 0.6]
-print(classify(inX, group, labels, 3))
+print('predict inX({0}): {1}'.format(inX, classify(inX, group, labels, 3)))
 
+neigh = KNeighborsClassifier(n_neighbors=3)
+neigh.fit(group, labels)
+inX2 = np.array(inX)[np.newaxis, :] # predict方法只接受2维数组作为参数
+print('predict inX({0}) by sklearn: {1}'.format(inX, neigh.predict(inX2)))
+print('predict probability of inX({0}) by sklearn: {1}'.format(inX, neigh.predict_proba(inX2)))
+      
 # Visualize
 Apoints = []
 Bpoints = []
