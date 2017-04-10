@@ -1,6 +1,16 @@
 Source URL: http://scikit-learn.org/stable/modules/neighbors.html
-1.6 �����㷨
-    sklearn.neighbors�ṩ�˺ܶ�����мල���޼ල�Ļ��ڽ����㷨��ѧϰ�����Ĺ��ܣ��޼ල��������㷨�Ǻܶ�����ѧϰ�����Ļ���������notably manifold learning���׾��ࡣ�����ڽ����㷨���мලѧϰ������Ҫ��������ʽ������ɢ���ݱ�ǩ�ķ��࣬�Լ����������ݱ�ǩ�Ļع�
-    ������㷨��ԭ�����Ƕ���һ��Ԥ���������k������һ���µĵ㣬��ѵ�������ҵ�k�����µ���������������Ȼ��Ԥ���µ�ı�ǩ���������������k�������û�����ģ�Ҳ�����Ǹ��ݵ㼯���ܶȲ�ͣ�仯��(radius-based neighbor learning)������������κ�һ�ֶ���(metric measure, ��Ҫ�������ǲ���ʽ�������Ķ�����ܳ�֮Ϊһ��metric����ŷ�Ͼ�������õ�һ��ѡ�񡣻��ڽ��ڵķ���ͨ����Ϊ�޹��ɵĻ���ѧϰ��������Ϊ������ֻ�Ǽ򵥵ġ���ס�����е�ѵ�����ݣ���Ȼ�п��ܽ����ݱ仯�ɸ���������ṹ����Ball Tree��KDTree�㷨��
-    �������ǳ��ļ򵥣�����������㷨�ڴ����ķ����Լ��ع������ж�����˾޴�ĳɹ���������д����ʶ�������ͼ��������Ϊһ���ǲ������ķ��������ھ��߽߱�ǳ�������ķ�������к����á�
-    sklearn.neighbors�ܴ���Numpy�������scipy.sparse������Ϊ���룬���ڳ��ܾ�����˵���������еľ������������ʹ�ã�������ϡ�����ֻ��ʹ��������ɿɷ�˹������
+1.6 近邻算法
+    sklearn.neighbors提供了很多关于有监督和无监督的基于近邻算法的学习方法的功能，无监督的最近邻算法是很多其他学习方法的基础，
+    比如notably manifold learning和谱聚类。而基于近邻算法的有监督学习方法主要有两种形式：对离散数据标签的分类，以及对连续数据标签的回归
+    
+    最近邻算法的原理就是对于一个预定义的数字k，给定一个新的点，在训练集中找到k个与新点距离最近的样本，然后预测新点的标签。
+    这个样本的数量k可以是用户定义的，也可以是根据点集的密度不停变化的(radius-based neighbor learning)。
+    距离可以是任何一种度量(metric measure, 需要满足三角不等式等条件的定义才能称之为一个metric）：欧氏距离是最常用的一种选择。
+    基于近邻的方法通常称为无归纳的机器学习方法，因为它仅仅只是简单的“记住”所有的训练数据
+   （虽然有可能将数据变化成更快的索引结构比如Ball Tree和KDTree算法）
+    
+    尽管它非常的简单，但是最近邻算法在大量的分类以及回归问题中都获得了巨大的成功，包括手写数字识别和卫星图像处理。
+    作为一个非参数化的方法，它在决策边界非常不规则的分类情况中很适用。
+    
+    sklearn.neighbors能处理Numpy数组或者scipy.sparse矩阵作为输入，
+    对于稠密矩阵来说，几乎所有的距离度量都可以使用，而对于稀疏矩阵，只能使用任意的闵可夫斯基距离
