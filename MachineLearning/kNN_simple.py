@@ -37,39 +37,40 @@ def classify(inX, dataSet, labels, k):
     # 返回数量最多的label
     return sortedLabelCount[0][0]
 
-group, labels = createDataSet()
-inX = [0.2, 0.6]
-print('predict inX({0}): {1}'.format(inX, classify(inX, group, labels, 3)))
+def test():
+    group, labels = createDataSet()
+    inX = [0.2, 0.6]
+    print('predict inX({0}): {1}'.format(inX, classify(inX, group, labels, 3)))
 
-neigh = KNeighborsClassifier(n_neighbors=3)
-neigh.fit(group, labels)
-inX2 = np.array(inX)[np.newaxis, :] # predict方法只接受2维数组作为参数
-print('predict inX({0}) by sklearn: {1}'.format(inX, neigh.predict(inX2)))
-print('predict probability of inX({0}) by sklearn: {1}'.format(inX, neigh.predict_proba(inX2)))
-      
-# Visualize
-Apoints = []
-Bpoints = []
-groupSize = group.shape[0]
-for i in range(groupSize):
-    if labels[i] == 'A':
-        Apoints.append(group[i].tolist())
-    else:
-        Bpoints.append(group[i].tolist())
+    neigh = KNeighborsClassifier(n_neighbors=3)
+    neigh.fit(group, labels)
+    inX2 = np.array(inX)[np.newaxis, :] # predict方法只接受2维数组作为参数
+    print('predict inX({0}) by sklearn: {1}'.format(inX, neigh.predict(inX2)))
+    print('predict probability of inX({0}) by sklearn: {1}'.format(inX, neigh.predict_proba(inX2)))
+          
+    # Visualize
+    Apoints = []
+    Bpoints = []
+    groupSize = group.shape[0]
+    for i in range(groupSize):
+        if labels[i] == 'A':
+            Apoints.append(group[i].tolist())
+        else:
+            Bpoints.append(group[i].tolist())
 
-Apoints = np.array(Apoints)
-Bpoints = np.array(Bpoints)
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.scatter(Apoints[:, 0], Apoints[:, 1], c='red', marker='o')
-for a in Apoints:
-    plt.annotate('A', xy=(a[0], a[1]))
-    
-ax.scatter(Bpoints[:, 0], Bpoints[:, 1], c='blue', marker='v')
-for b in Bpoints:
-    plt.annotate('B', xy=(b[0], b[1]))
+    Apoints = np.array(Apoints)
+    Bpoints = np.array(Bpoints)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.scatter(Apoints[:, 0], Apoints[:, 1], c='red', marker='o')
+    for a in Apoints:
+        plt.annotate('A', xy=(a[0], a[1]))
+        
+    ax.scatter(Bpoints[:, 0], Bpoints[:, 1], c='blue', marker='v')
+    for b in Bpoints:
+        plt.annotate('B', xy=(b[0], b[1]))
 
-ax.scatter(inX[0], inX[1], c='green', marker='s')
-plt.axis([-1, 1.5, -1, 1.5])
-plt.show()
+    ax.scatter(inX[0], inX[1], c='green', marker='s')
+    plt.axis([-1, 1.5, -1, 1.5])
+    plt.show()
     
