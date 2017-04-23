@@ -7,6 +7,8 @@ TPR: TP / (TP + FN)
 FPR: FP / (FP + TN)
 
 原理与precision_recall_curve差不多, 只不过thresholds不会剔除最小的一个
+
+而roc_auc_score则是在roc曲线的基础上计算auc，auc是计算roc曲线下覆盖的面积
 '''
 
 y_true = np.array([1, 1, 2, 2])
@@ -23,3 +25,9 @@ print('y_pred: ', probs_pred)
 print('fpr: ', fpr)
 print('tpr: ', tpr)
 print('thresholds: ', thresholds)
+
+# area = 0.5 * 1 + 0.5 * 0.5
+# 这个方法不支持pos_label参数
+y_true = np.array([0, 0, 1, 1])
+auc = sm.roc_auc_score(y_true, probs_pred)
+print('auc: ', auc)
