@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import sklearn.tree as st
 
@@ -46,10 +47,45 @@ import sklearn.tree as st
 关于这三种方法的综合评定，ID3倾向于选择多值属性，尽管增益率调整了这种便宜，但是它倾向于产生不平衡的划分，其中
 一个分区比其他分区小得多。基尼指数偏向于多值属性，并且当类的数量很大时会有计算上的困难，因为这个是指数级的复杂度，
 并且它还倾向于导致相等大小的分区和纯度。anyway，尽管这些算法都是有偏的，但是这些度量在实际中都产生了相当好的结果
-
-
              
 '''
 
+def calcShannonEnt(dataset):
+    dataset = np.array(dataset)
+    rows, columns = np.shape(dataset)
+    labelCount = {}
+    labels = dataset[:, -1]
+    for i in range(len(labels)):
+        if labels[i] not in labelCount:
+            labelCount[labels[i]] = 1
+        else:
+            labelCount[labels[i]] += 1
+    ent = 0
+    for label in labelCount:
+        prob = labelCount[label] / rows
+        ent -= prob*math.log(prob, 2)
+    return ent
 
+watermelon = [['青绿', '蜷缩', '浊响', '清晰', '凹陷', '硬滑', '是'],
+              ['乌黑', '蜷缩', '沉闷', '清晰', '凹陷', '硬滑', '是'],
+              ['乌黑', '蜷缩', '浊响', '清晰', '凹陷', '硬滑', '是'],
+              ['青绿', '蜷缩', '沉闷', '清晰', '凹陷', '硬滑', '是'],
+              ['浅白', '蜷缩', '浊响', '清晰', '凹陷', '硬滑', '是'],
+              ['青绿', '稍蜷', '浊响', '清晰', '稍凹', '软粘', '是'],
+              ['乌黑', '稍蜷', '浊响', '稍糊', '稍凹', '软粘', '是'],
+              ['乌黑', '稍蜷', '浊响', '清晰', '稍凹', '硬滑', '是'],
+              ['乌黑', '稍蜷', '沉闷', '稍糊', '稍凹', '硬滑', '否'],
+              ['青绿', '硬挺', '清脆', '清晰', '平坦', '软粘', '否'],
+              ['浅白', '硬挺', '清脆', '模糊', '平坦', '硬滑', '否'],
+              ['浅白', '蜷缩', '浊响', '模糊', '平坦', '软粘', '否'],
+              ['青绿', '稍蜷', '浊响', '稍糊', '凹陷', '硬滑', '否'],
+              ['浅白', '稍蜷', '沉闷', '稍糊', '凹陷', '硬滑', '否'],
+              ['乌黑', '稍蜷', '浊响', '清晰', '稍凹', '软粘', '否'],
+              ['浅白', '蜷缩', '浊响', '模糊', '平坦', '硬滑', '否'],
+              ['青绿', '蜷缩', '沉闷', '稍糊', '稍凹', '硬滑', '否']]
+print('watermelon dataset: \n', np.array(watermelon))
+ent_all = calcShannonEnt(watermelon)
+print('Entropy of watermelon: ', ent_all)
+
+    
 
