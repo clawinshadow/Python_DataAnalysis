@@ -51,20 +51,72 @@ import sklearn.tree as st
 '''
 
 def calcShannonEnt(dataset):
+    '''
+    计算每个数据集的香农熵，ID3算法。以数据集最后一列提取分类标签
+    '''
     dataset = np.array(dataset)
     rows, columns = np.shape(dataset)
-    labelCount = {}
     labels = dataset[:, -1]
+    # 高效的写法
+    label, counts = np.unique(labels, return_counts=True)
+    labelCount = dict(zip(label, counts))
+    # 累赘的写法
+    '''
+    labelCount = {}
     for i in range(len(labels)):
         if labels[i] not in labelCount:
             labelCount[labels[i]] = 1
         else:
             labelCount[labels[i]] += 1
     ent = 0
+    '''
+    ent = 0.0
     for label in labelCount:
         prob = labelCount[label] / rows
         ent -= prob*math.log(prob, 2)
     return ent
+
+def splitDataset(dataset, axis, value):
+    '''
+    分割数据集，axis和value代表根据dataset中的第axis列，与value相等的每一行提取出来，组成新数据集
+    '''
+    dataset = np.array(dataset)
+    resultDS = []
+    for i in range(len(dataset)):
+        data = dataset[i, axis]
+        if data == value:
+            resultDS.append(dataset[i])
+    return np.array(resultDS)
+
+def chooseBestToSplit(dataset):
+    '''
+    选择最优的一列来进行分裂，返回该列的索引
+    '''
+    dataset = np.array(dataset)
+    rowCount, columnCount = dataset.shape;
+    featureCount = {}                       # key为每一列的不同元素，count为每个元素对应的个数
+    gain = []                               # 存储根据每个feature进行划分的信息增益
+    ent_total = calcShannonEnt(dataset)     # 原始的信息熵
+    for i in range(columnCount - 1):        # 最后一列是分类信息，所以不参与比较
+        featureCount.clear()
+        column = dataset[:, i]
+        # 填充featureCount，遍历该列中每个元素
+        for j in range(rowCount):
+            data = column[j]
+            if data not in featureCount:
+                featureCount[data] = 1
+            else:
+                featureCount[data] += 1
+        ent_feature = 0.0                   
+        for key in featureCount:
+            split_ds = splitDataset(dataset, i, key)    # 分裂数据集
+            ent_split = calcShannonEnt(split_ds)        # 计算每个子数据集的信息熵
+            weight = featureCount[key] / rowCount       # 计算每个子数据集的权重
+            ent_feature += weight * ent_split           # 计算该列加权后的信息熵
+
+        gain.append(ent_total - ent_feature)            # 计算分裂前后的信息增益
+    print('Information gain: ', gain)
+    return gain.index(max(gain))
 
 watermelon = [['青绿', '蜷缩', '浊响', '清晰', '凹陷', '硬滑', '是'],
               ['乌黑', '蜷缩', '沉闷', '清晰', '凹陷', '硬滑', '是'],
@@ -87,5 +139,6 @@ print('watermelon dataset: \n', np.array(watermelon))
 ent_all = calcShannonEnt(watermelon)
 print('Entropy of watermelon: ', ent_all)
 
-    
+print(splitDataset(watermelon, 5, '软粘'))
+print(chooseBestToSplit(watermelon))
 
