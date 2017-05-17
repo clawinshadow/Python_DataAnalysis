@@ -135,3 +135,22 @@ F, pval = sfs.f_regression(X, y.T)
 print('X: ', X)
 print('y: ', y)
 print('f_regression of X & y: ', F)
+
+# SelectKBest, 按照某个评分函数对每一列特征进行评估，然后选取其中K个最好的
+# 用卡方检验为例
+print('{0:-^70}'.format('SelectKBest'))
+data = np.array([[5, 8, 9, 8, 10, 20],
+                 [10, 11, 9, 12, 8, 10],
+                 [3, 17, 5, 15, 6, 14],
+                 [8, 12, 11, 9, 11, 9],
+                 [4, 16, 7, 13, 8, 12]])
+target = np.array([1, 2, 3, 4, 5, 6])
+chi2, pval = sfs.chi2(data.T, target.T)
+print('chi2, pval of data - target: ', chi2, pval)
+skb = sfs.SelectKBest(score_func=sfs.chi2, k=3)
+X_new = skb.fit_transform(data.T, target.T)
+print('features picked up by SelectKBest: \n', X_new)
+print('skb.scores_: ', skb.scores_)
+print('skb.pvalues_: ', skb.pvalues_)
+
+
