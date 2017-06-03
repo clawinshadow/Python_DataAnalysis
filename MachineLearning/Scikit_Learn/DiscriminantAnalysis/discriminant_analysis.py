@@ -1,4 +1,7 @@
 import numpy as np
+import scipy.linalg as sl
+import scipy.spatial.distance as ssd
+import matplotlib.pyplot as plt
 import sklearn.discriminant_analysis as sda
 
 '''
@@ -45,3 +48,82 @@ import sklearn.discriminant_analysis as sda
    可以转化成只含等式约束的最优化问题，即 constraint: a.T * E * a = 1, 求 Maximize(a.T * B * a)
    根据二阶充分必要条件，求导可得a为 E.inv * B的最大特征值对应的特征向量 
 '''
+# a simple binary-classification example
+X = np.array([[-1, -1],
+              [-2, -1],
+              [-3, -2],
+              [1, 1],
+              [2, 1],
+              [3, 2]])
+y = np.array([1, 1, 1, 2, 2, 2])
+clf = sda.LinearDiscriminantAnalysis(store_covariance=True)   # 两个分类的协方差矩阵相同，所以使用LDA
+clf.fit(X, y)
+print('training dataset D: \n', X)
+print('training target: ', y)
+print('LinearDiscriminantAnalysis class object: \n', clf)
+print('weights vector - clf.coef_: ', clf.coef_)  # 权重向量，不包括bias
+print('bias - clf.intercept_: ', clf.intercept_)  # 截距，即bias
+# 训练集每个分类的协方差矩阵，对LDA来说都是一样的, store_covariance必须=True
+# 注意这个协方差矩阵是标准化之后的协方差阵，也是相关阵
+# 直接计算的协方差阵应该是np.cov([[-1, -1], [-2, -1], [-3, -2]]) = [[1, 0.5], [0.5, 0.333333]]
+print('covariance matrix with default solver: \n', clf.covariance_) 
+print('individual class means: ', clf.means_)     # 每个分类的样本均值
+print('overall mean of D: ', clf.xbar_)           # 整个训练集的样本均值
+print('unique targets: ', clf.classes_)           # 训练集的所有不同分类
+
+x = np.array([-0.8, -1])                          # 待预测的向量x
+mds = []
+for i in range(len(clf.means_)):
+    # 计算x与各分类均值向量的距离
+    mds.append(ssd.mahalanobis(x, clf.means_[i], sl.inv(clf.covariance_)))
+sortedIndices = np.argsort(mds)
+predictResult = clf.classes_[sortedIndices[0]]    # 选取其中最近的一个作为分类结果
+print('vector to be predicted: ', x)
+print('distances to means: ', mds)
+print('predict result: ', predictResult)
+print('predect result by sklearn: ', clf.predict(x.reshape(1, -1)))
+
+def generate_dataset(fixedCov=True):
+    '''
+    生成两组二元高斯分布的数据集，每一组带有自己的分类标签
+    '''
+    mu1 = np.array([0, 0])                    # 分类一的均值向量
+    mu2 = np.array([1, 1])                    # 分类二的均值向量
+    C = np.array([[0., -0.23], [0.83, .23]])  # 一个线性变换的矩阵，赋予各特征列相关关系，不再是相互独立的高斯分布
+    n = 100                                   # 每一组中的样本数量
+    dim = 2                                   # 特征列的数目，本例中是二元分布
+    # 生成多元高斯分布样本数据的步骤
+    # 1. 每一列生成独立的一元高斯分布数据
+    # 2. 组合起来后，乘以预先定义好的线性变换矩阵。 n*p * p*p = n*p
+    group_1 = np.dot(np.random.randn(n, dim), C) + mu1 # 生成分类一的样本
+    group_2 = []
+    if fixedCov:
+        group_2 = np.dot(np.random.randn(n, dim), C) + mu2   # 生成分类二的样本, 与分类一共享协方差矩阵，只是均值不一样
+    else:
+        group_2 = np.dot(np.random.randn(n, dim), C.T) + mu2 
+    # 将两个分类的数据组合起来，各赋予分类标签0和1
+    X = np.r_[group_1, group_2]  # 按第一个维度连接起来，对一维数组来说就是append，对二维数组来说就是按行堆叠
+    y = np.hstack((np.zeros(n), np.ones(n)))
+    return X, y
+
+# QDA sample
+print('{0:-^60}'.format('Quadratic Discriminant Analysis'))
+X, y = generate_dataset(False)
+qda = sda.QuadraticDiscriminantAnalysis(store_covariances=True)
+y_pred = qda.fit(X, y).predict(X)                            
+X0, X1 = X[y == 0], X[y == 1]                               # X中属于两个分类的点集
+alpha = 0.5 
+plt.plot(X0[:, 0], X0[:, 1], 'o', alpha=alpha, color='red')
+plt.plot(X1[:, 0], X1[:, 1], 'o', alpha=alpha, color='blue')
+# class 0 and 1 : areas
+nx, ny = 200, 100
+x_min, x_max = plt.xlim()
+y_min, y_max = plt.ylim()
+xx, yy = np.meshgrid(np.linspace(x_min, x_max, nx), np.linspace(y_min, y_max, ny))
+Z = qda.predict_proba(np.c_[xx.ravel(), yy.ravel()])
+Z = Z[:, 1].reshape(xx.shape)
+plt.contour(xx, yy, Z, [0.5], linewidths=2., colors='k')
+plt.show()
+    
+    
+    
