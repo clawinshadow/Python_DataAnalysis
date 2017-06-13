@@ -18,6 +18,25 @@ import matplotlib.pyplot as plt
    Σ.inv = Σ(1/λi * ui*ui.T)
 
    多元高斯分布的相关矩阵 Σ 至少是半正定的，一般都是正定的，每个特征值都大于零
+
+2. 关于高斯分布的条件分布和边际分布
+   给定一个联合高斯分布 Ν(x|μ, Σ), 精度矩阵 Λ.inv = Σ
+   
+                 xa                          μa                   Σaa  Σab               Λaa  Λab
+   将 x 划分为：      相应的均值向量μ划分为:       协方差矩阵为：            精度矩阵为：
+                 xb                          μb                   Σba  Σbb               Λba  Λbb
+
+   条件分布：
+         p(xa|xb) = N(x|μa - Λaa.inv * Λab * (xb - μb), Λaa.inv)
+         p(xa|xb) = N(x|μa + Σab * Σbb.inv * (xb - μb), Σaa - Σab * Σbb.inv * Σba)
+         p(xb|xa) = N(x|μb - Λbb.inv * Λba * (xa - μa), Λbb.inv)
+         p(xb|xa) = N(x|μb + Σba * Σaa.inv * (xa - μa), Σbb - Σba * Σaa.inv * Σab)
+         
+   边际分布
+         p(xa) = N(x|μa, Σaa)
+         p(xb) = N(x|μb, Σbb)
+
+
 '''
 
 # 验证 Σ = Σ(λi*ui*ui.T)
