@@ -44,13 +44,9 @@ def likelihood(x, t, w, sigma):
         for k in range(len(wi)):
             prob = 1                    # initial value
             weight = wi[k]
-            for j in range(len(x)):     # 似然函数是每个数据样本点的概率之乘积
-                xj = x[j]
-                tj = t[j]
-                mean = func(weight[0], weight[1], xj)
-                prob = prob * gaussian_pdf(mean, sigma, tj)
-                # prob = prob * ss.norm(mean, beta).pdf(tj) 千万不要在4万次的循环里去new一个norm的object，会非常的慢
-
+            mean = func(weight[0], weight[1], x)
+            prob = prob * gaussian_pdf(mean, sigma, t)
+            # prob = prob * ss.norm(mean, beta).pdf(tj) 千万不要在4万次的循环里去new一个norm的object，会非常的慢
             rows.append(prob)
 
         result.append(rows)
@@ -59,7 +55,6 @@ def likelihood(x, t, w, sigma):
 
 # 根据先验概率计算后验概率，phi是design matrix，t是目标变量, 参考上面的公式
 def calc_posterior(m0, s0, beta, phi, t):
-    print(m0, s0, beta, phi, t)
     Sn_inv = sl.inv(s0) + beta * np.dot(phi.T, phi)
     Sn = sl.inv(Sn_inv)
     temp = np.dot(sl.inv(s0), m0.T)
@@ -67,8 +62,6 @@ def calc_posterior(m0, s0, beta, phi, t):
         temp = temp.reshape(-1, 1)
     mn = np.dot(Sn, temp + beta * np.dot(phi.T, t))
 
-    print(mn)
-    print(Sn)
     return mn, Sn
 
 def set_base_attrs(ax):
@@ -127,8 +120,8 @@ ax3.set_title('data space')
 ax4 = plt.subplot(434, aspect='equal')
 ax4 = set_base_attrs(ax4)
 ax4.set_title('likelihood')
-x4 = x[:1].ravel()
-t4 = t[:1].ravel()
+x4 = x[1]
+t4 = t[1]
 probs4 = likelihood(x4, t4, pos, sigma)
 levels4 = np.linspace(probs4.min(), probs4.max(), 200)
 ax4.contourf(x2, y2, probs4, levels4, cmap='jet')
@@ -152,8 +145,8 @@ ax6.plot(x4, t4, 'bo')
 
 ax7 = plt.subplot(437, aspect='equal')
 ax7 = set_base_attrs(ax7)
-x7 = x[1:2].ravel()
-t7 = t[1:2].ravel()
+x7 = x[2]
+t7 = t[2]
 probs7 = likelihood(x7, t7, pos, sigma)
 levels7 = np.linspace(probs7.min(), probs7.max(), 200)
 ax7.contourf(x2, y2, probs7, levels7, cmap='jet')
@@ -174,5 +167,33 @@ ax9 = plt.subplot(439, aspect='equal')
 ax9 = set_base_attrs(ax9)
 ax9 = plot_lines(ax9, rv8)
 ax9.plot([x4, x7], [t4, t7], 'bo')
+
+ax10 = plt.subplot(4, 3, 10, aspect='equal')
+ax10 = set_base_attrs(ax10)
+x10 = np.array(x[-1])
+t10 = np.array(t[-1])
+print(x10, t10)
+probs10 = likelihood(x10, t10, pos, sigma)
+levels10 = np.linspace(probs10.min(), probs10.max(), 200)
+ax10.contourf(x2, y2, probs10, levels10, cmap='jet')
+ax10.plot(-0.3, 0.5, 'w+')
+
+ax11 = plt.subplot(4, 3, 11, aspect='equal')
+ax11 = set_base_attrs(ax11)
+xs = x[2:]
+ts = t[2:]
+phi11 = np.c_[np.ones(18).reshape(-1, 1), xs.reshape(-1, 1)]
+t11 = ts.reshape(-1, 1)
+posterior_mean_final, posterior_cov_final = calc_posterior(posterior_mean8.ravel(), posterior_cov8, beta, phi11, t11)
+rv11 = ss.multivariate_normal(posterior_mean_final.ravel(), posterior_cov_final)
+probs11 = rv11.pdf(pos)
+levels11 = np.linspace(probs11.min(), probs11.max(), 200)
+ax11.contourf(x2, y2, probs11, levels11, cmap='jet')
+ax11.plot(-0.3, 0.5, 'w+')
+
+ax12 = plt.subplot(4, 3, 12, aspect='equal')
+ax12 = set_base_attrs(ax12)
+ax12 = plot_lines(ax12, rv11)
+ax12.plot(x, t, 'bo')
 
 plt.show()
