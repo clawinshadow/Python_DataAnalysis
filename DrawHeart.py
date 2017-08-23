@@ -9,11 +9,12 @@ fig = plt.figure(figsize=(9, 7))
 fig.canvas.set_window_title('FanFan & LanLan')
 
 plt.fill_between(x, y2, y1, color='pink')
-font = {'family': 'fantasy',
+font = {
+        'family': 'fantasy',
         'color':  'lightcoral',
         'weight': 'normal',
         'size': 16,
-        }
+       }
 
 plt.text(-2.2, -2.5, 'Fan & Lan stay together', fontdict=font)
 plt.text(0.4, -2.5, 'forever', fontdict=font)
