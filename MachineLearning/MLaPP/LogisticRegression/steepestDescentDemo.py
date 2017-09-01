@@ -13,6 +13,12 @@ def Jac(x):
 
     return np.array([differential_x0, differential_x1])
 
+def lineSearch(eta, theta, g):
+    # 目标函数 f(theta - eta * g), theta 是当前的点，g是梯度向量，eta为未知参数
+    # 最速下降法，能保证收敛，但速度还是不够快
+    delta = theta - eta * g
+    return func(delta)
+
 def CalcZ(X, Y):
     if X.shape != Y.shape:
         raise ValueError('X and Y must have same shape')
@@ -33,16 +39,24 @@ X, Y = np.meshgrid(np.linspace(0, 2, 200), np.linspace(-0.5, 3, 200))
 # 计算Z，除了各种多元统计模型的pdf之外，我们自己写的函数一般只有先ravel再reshape比较容易计算Z值
 Z = CalcZ(X, Y)
 
-fig = plt.figure(figsize=(11, 5))
+fig = plt.figure(figsize=(11, 10))
 fig.canvas.set_window_title('steepestDescentDemo')
 
-def Draw(index, eta, maxIter=20):
+def Draw(index, eta, method='default', maxIter=20):
     i = 0
     x0 = np.array([0, 0])
     points = x0
+    
     while i < maxIter:
         g = Jac(x0)
-        x_next = x0 - eta * g
+        if method == 'default':
+            x_next = x0 - eta * g
+        elif method == 'lineSearch':
+            eta0 = 0
+            res = so.minimize(lineSearch, eta0, args=(x0, g))
+            x_next = x0 - res.x[0] * g
+        else:
+            raise ValueError('method unknown')
         points = np.vstack((points, x_next))
         x0 = x_next
         i += 1
@@ -55,6 +69,8 @@ def Draw(index, eta, maxIter=20):
     plt.plot(x_solution[0], x_solution[1], color='r', ls='none', marker='o', ms=5)
     plt.plot(points[:, 0], points[:, 1], color='r', marker='o', fillstyle='none', ms=3, lw=0.5)
 
-Draw(121, 0.1)
-Draw(122, 0.6)
+Draw(221, 0.1)
+Draw(222, 0.6)
+Draw(223, 0, method='lineSearch', maxIter=10)
+
 plt.show()
