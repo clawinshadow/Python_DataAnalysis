@@ -26,7 +26,7 @@ points_1 = X[~isZero]
 
 # plot the points
 fig = plt.figure(figsize=(11, 10))
-fig.canvas.set_window_title('logregLaplaceGirolamiDemo')
+fig.canvas.set_window_title('logregLaplaceGirolamiDemo_Part_1')
 
 plt.subplot(221)
 plt.axis([-10, 5, -8, 8])
@@ -147,5 +147,105 @@ plt.title('Laplace Approximation to Posterior')
 plt.plot(w_MAP[0], w_MAP[1], ls='none', marker='o', color='midnightblue', ms=5)
 plt.contour(w1, w2, Z, 20, cmap='jet')
 
-plt.show()
+# calc prediction probability using w-MAP plug-in
+def predict_prob(x, w_MAP):
+    w_MAP = np.array(w_MAP).reshape(-1, 1)
+    return logistic(np.dot(x.reshape(1, -1), w_MAP))
 
+x1, x2 = np.meshgrid(np.arange(-8, 8, 0.2), np.arange(-8, 8, 0.2))
+x1_ravel = x1.ravel()
+x2_ravel = x2.ravel()
+predict_probs = []
+for i in range(len(x1_ravel)):
+    x = np.array([x1_ravel[i], x2_ravel[i]])
+    predict_probs.append(predict_prob(x, w_MAP))
+
+predict_probs = np.array(predict_probs).reshape(x1.shape)
+
+# create a new figure
+fig = plt.figure(figsize=(11, 10))
+fig.canvas.set_window_title('logregLaplaceGirolamiDemo_Part_2')
+
+plt.subplot(221)
+plt.axis([-8, 8, -8, 8])
+plt.xticks(np.arange(-8, 9, 2))
+plt.yticks(np.arange(-8, 9, 2))
+plt.title('p(y=1|x, wMAP)')
+plt.plot(points_0[:, 0], points_0[:, 1], 'bo', ls='none', fillstyle='none', ms=5)
+plt.plot(points_1[:, 0], points_1[:, 1], 'ro', ls='none', fillstyle='none', ms=1)
+plt.contour(x1, x2, predict_probs, 20, cmap='jet', linewidths=0.5)  # contour里面的直线宽度只能用linewidths关键字来设置，不能用lw
+
+# 根据Laplace Approximation得到的后验概率分布P(w|D)来对w进行采样，然后画图
+size=120
+sample_w = laplaceApprx.rvs(size)
+x = np.linspace(-10, 8, 200)
+ys = []
+for i in range(len(sample_w)):
+    w = sample_w[i]
+    yi = -1 * w[0] * x / w[1]  # 本例中截距是0
+    ys.append(yi)
+ys = np.array(ys).T
+
+# plot the sample decision boundaries
+plt.subplot(222)
+plt.axis([-10, 8, -8, 8])
+plt.xticks(np.arange(-10, 9, 2))
+plt.yticks(np.arange(-8, 9, 2))
+plt.title('decision boundary for sampled w')
+plt.plot(points_0[:, 0], points_0[:, 1], 'bo', ls='none', fillstyle='none', ms=5)
+plt.plot(points_1[:, 0], points_1[:, 1], 'ro', ls='none', fillstyle='none', ms=1)
+plt.plot(x, ys, color='green', lw=0.5)
+
+# 根据采样出来的w值，来预测x，然后取平均值
+def predict_MC(x, ws):
+    # x 是 1 * 2 矩阵， ws是N * 2, 所以要 x * ws.T 
+    return np.mean(logistic(np.dot(x, ws.T)))
+
+MC_predicts = []
+for i in range(len(x1_ravel)):
+    x = np.array([x1_ravel[i], x2_ravel[i]])
+    MC_predicts.append(predict_MC(x, sample_w))
+
+MC_predicts = np.array(MC_predicts).reshape(x1.shape)
+
+# plot the Monte-Carlo predict probs
+plt.subplot(223)
+plt.axis([-8, 8, -8, 8])
+plt.xticks(np.arange(-8, 9, 2))
+plt.yticks(np.arange(-8, 9, 2))
+plt.title('MC approx of p(y=1|x)')
+plt.plot(points_0[:, 0], points_0[:, 1], 'bo', ls='none', fillstyle='none', ms=5)
+plt.plot(points_1[:, 0], points_1[:, 1], 'ro', ls='none', fillstyle='none', ms=1)
+plt.contour(x1, x2, MC_predicts, 30, cmap='jet', linewidths=0.5)
+
+# 使用Probit 函数来近似sigma函数，这样可以得到predict分布的解析解，因为Probit函数就是高斯分布的cdf函数
+# p(w|D) ≈ N(w|mN,VN), a = w.T * x, mu_a = mN.T * x, simga_a2 = x.T * VN * x
+# 则 p(y = 1|x,D) ≈ sigm(κ(simga_a2) * mu_a)
+# κ(simga_a2) = power((1 + π * simga_a2/8), -0.5), 详见书中 P259 - P260
+def predict_Probit(x, mN, vN):
+    x = x.reshape(-1, 1)
+    mN = mN.reshape(-1, 1)
+    mu_a = np.dot(x.T, mN)
+    sigma_a2 = np.dot(x.T, np.dot(vN, x))
+    k = (1 + np.pi * sigma_a2 / 8)**-0.5
+
+    return logistic(k * mu_a)
+
+predicts = []
+for i in range(len(x1_ravel)):
+    x = np.array([x1_ravel[i], x2_ravel[i]])
+    predicts.append(predict_Probit(x, w_MAP, cov))
+
+predicts = np.array(predicts).reshape(x1.shape)
+
+# plot it
+plt.subplot(224)
+plt.axis([-8, 8, -8, 8])
+plt.xticks(np.arange(-8, 9, 2))
+plt.yticks(np.arange(-8, 9, 2))
+plt.title('numerical approx of p(y=1|x)')
+plt.plot(points_0[:, 0], points_0[:, 1], 'bo', ls='none', fillstyle='none', ms=5)
+plt.plot(points_1[:, 0], points_1[:, 1], 'ro', ls='none', fillstyle='none', ms=1)
+plt.contour(x1, x2, predicts, 30, cmap='jet', linewidths=0.5)
+
+plt.show()
