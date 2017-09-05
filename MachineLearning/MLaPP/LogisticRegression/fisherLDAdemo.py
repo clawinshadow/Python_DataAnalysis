@@ -3,6 +3,7 @@ import scipy.stats as ss
 import scipy.linalg as sl
 import sklearn.linear_model as slm
 import sklearn.decomposition as sd
+import sklearn.preprocessing as sp
 import matplotlib.pyplot as plt
 
 def GetSW(X):
@@ -50,7 +51,9 @@ print('w_PCA: ', w_PCA.ravel())
 
 # calculate points projections
 LDA_Projections = np.dot(X, w)
+scaled_LDA = sp.MinMaxScaler((-50, 0)).fit_transform(LDA_Projections)  # 根据书中的图形，要scale到(-50, 0)这个区间
 PCA_Projections = np.dot(X, w_PCA)
+scaled_PCA = sp.MinMaxScaler((-7, 4)).fit_transform(PCA_Projections)  
 print('LDA_Projections: ', LDA_Projections)
 print('PCA_Projections: ', PCA_Projections)
 
@@ -59,7 +62,7 @@ x = np.linspace(-4, 8, 200)
 y_lda = GetY(center, x, w)
 y_pca = GetY(center, x, w_PCA)
 
-fig = plt.figure(figsize=(11, 10))
+fig = plt.figure(figsize=(12, 10))
 fig.canvas.set_window_title('fisherLDAdemo')
 
 plt.subplot(221)
@@ -70,6 +73,23 @@ plt.plot(points_0[:, 0], points_0[:, 1], 'b+', ls='none')
 plt.plot(points_1[:, 0], points_1[:, 1], 'ro', ls='none', fillstyle='none')
 plt.plot(x, y_lda, 'r-', label='fisher')
 plt.plot(x, y_pca, 'g:', label='pca')
-
+plt.plot([mu0[0], mu1[0], center[0]], [mu0[1], mu1[1], center[1]], 'kx-', ms=8)
 plt.legend()
+
+plt.subplot(222)
+plt.title('fisher')
+plt.axis([-45, 0, 0, 20])
+plt.xticks(np.arange(-45, 1, 5))
+plt.yticks(np.arange(0, 21, 5))
+plt.hist(scaled_LDA[0:100], bins=10, align='left', color='blue', edgecolor='k')    # label 0
+plt.hist(scaled_LDA[100:200], bins=10, align='left', color='red', edgecolor='k')   # label 1
+
+plt.subplot(223)
+plt.title('pca')
+plt.axis([-8, 4, 0, 25])
+plt.xticks(np.arange(-8, 5, 2))
+plt.yticks(np.arange(0, 26, 5))
+plt.hist(scaled_PCA[0:100], bins=10, align='left', color='blue', edgecolor='k')    # label 0
+plt.hist(scaled_PCA[100:200], bins=10, align='left', color='red', edgecolor='k')   # label 1
+
 plt.show()
