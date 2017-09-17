@@ -4,6 +4,7 @@ import scipy.stats as ss
 import sklearn.preprocessing as sp
 import matplotlib.pyplot as plt
 import matplotlib.animation as ma
+from mixGaussFit import *
 
 def GetColors(rmat):
     '''根据r矩阵来调配每个数据点的红色和蓝色墨水的比例'''
@@ -53,55 +54,6 @@ def Draw(ax, data, r, mu, cov, singleColor=False):
     artists.append(ax3)
 
     return artists
-
-def GetResponsibility(x, pi, mu, cov):
-    r = []
-    total = 0
-    for k in range(len(pi)):
-        pi_k = pi[k]
-        gaussianProb_k = ss.multivariate_normal(mu[k], cov[k]).pdf(x)
-        rk = pi_k * gaussianProb_k
-        
-        r.append(rk)
-        total += rk
-
-    return r / total
-
-def GetCovK(data, mu_k, rk):
-    dim = len(mu_k.ravel())
-    cov = np.zeros((dim, dim))
-    for i in range(len(data)):
-        rik = rk.ravel()[i]
-        gap = data[i].reshape(-1, 1) - mu_k.reshape(-1, 1)
-        cov_i = rik * np.dot(gap, gap.T)
-        cov += cov_i
-
-    return cov / np.sum(rk)
-    
-
-def EM(data, pi, mu, cov):
-    # E step, 主要是计算r(ik)
-    r = []
-    for i in range(len(data)):
-        xi = data[i]
-        r.append(GetResponsibility(xi, pi, mu, cov))
-
-    r = np.array(r)
-    # M step, 重新计算pi, mu, cov
-    pi_new = np.mean(r, axis=0)
-    mu_new = []
-    cov_new = []
-    for k in range(len(mu)):
-        rk = r[:, k].reshape(1, -1)
-        mu_k = np.dot(rk, data) / np.sum(rk)
-        mu_new.append(mu_k.ravel())
-        cov_new.append(GetCovK(data, mu_k, rk))
-
-    print('mu_new: \n', np.array(mu_new))
-    print('cov_new: \n', np.array(cov_new))
-    # print('r: \n', r)
-    return r, pi_new, np.array(mu_new), np.array(cov_new)
-        
 
 class SeqUpdate(object):
     def __init__(self, ax, data):
