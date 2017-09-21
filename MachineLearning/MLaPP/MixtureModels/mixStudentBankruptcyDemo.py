@@ -53,7 +53,7 @@ def pdf(x, mu, sigma, dof, inv_sigma):
     d = sigma.shape[0]
     gap = (x - mu).reshape(-1, 1)
     val_1 = math.gamma((dof + d) / 2)
-    val_2 = math.gamma(dof/2) * (dof * np.pi)**d/2 * sl.det(sigma)**0.5
+    val_2 = math.gamma(dof/2) * (dof * np.pi)**(d/2) * sl.det(sigma)**0.5
     val_3 = 1 + (1/dof) * np.dot(gap.T, np.dot(inv_sigma, gap))
 
     return (val_1 / val_2) * val_3**(-(dof + d) / 2) 
@@ -68,7 +68,7 @@ def GetR_Z(x, pi, mu, sigma, dof, inv_sigma):
         total += prob
         r.append(prob)
 
-        distance = mahalanobis(x.ravel(), mu[i].ravel(), inv_sigma[i])
+        distance = mahalanobis(x.ravel(), mu[i].ravel(), inv_sigma[i])**2
         zik = (dof[i] + D) / (dof[i] + distance)
         z.append(zik)
 
@@ -88,12 +88,13 @@ def EStep(X, pi, mu, sigma, dof):
         r, z = GetR_Z(xi, pi, mu, sigma, dof, inv_sigma)
         rMat.append(r)
         zMat.append(z)
-        
+
     return np.array(rMat), np.array(zMat)  # N * K
 
 # M step 中就不再需要pi, mu ... 这些参数了，已经拿到期望值r和z了
 def MStep(X, r, z, dof, updateDof=False):
     K, N = r.shape[1], X.shape[0]
+    D = X.shape[1]
     mu = []
     sigma = []
     pi = []
@@ -110,7 +111,6 @@ def MStep(X, r, z, dof, updateDof=False):
         sigma.append(sigma_k)
         pi.append(pi_k)
 
-    # update dof
     if updateDof:
         L = np.zeros((N, K))
         for i in range(K):
@@ -121,11 +121,9 @@ def MStep(X, r, z, dof, updateDof=False):
             inv_sigma_k = sl.inv(sigma_k)
             for j in range(len(X)):
                 xj = X[j]
-                distances.append(mahalanobis(xj.ravel(), mu[i].ravel(), inv_sigma_k))
+                distances.append(mahalanobis(xj.ravel(), mu[i].ravel(), inv_sigma_k)**2)
             distances = np.array(distances).ravel()
             L[:, i] = GetLk(dof[i], logmix, logdet, distances, X.shape[1])
-
-        print('L: \n', L)
 
         for i in range(K):
             sigma_k = sigma[i]
@@ -135,10 +133,10 @@ def MStep(X, r, z, dof, updateDof=False):
             inv_sigma_k = sl.inv(sigma_k)
             for j in range(len(X)):
                 xj = X[j]
-                distances.append(mahalanobis(xj.ravel(), mu[i].ravel(), inv_sigma_k))
+                distances.append(mahalanobis(xj.ravel(), mu[i].ravel(), inv_sigma_k)**2)
             distances = np.array(distances).ravel()
             
-            bnds = ((0, None),)
+            bnds = ((0.1, 200),)
             x_init = (dof[i],)
             res = so.minimize(dofFunc, x0=x_init, args=(logmix, logdet, distances, X.shape[1], L, i), bounds=bnds)
             dof_new.append(res.x)
@@ -160,6 +158,17 @@ def UpdateSigma(X, mu, r, z, k):
     
     return (1/rk) * (val_1 - val_2)
 
+def UpdateDof(r, z, D, dof):
+    w = r*z
+    l = np.log(w) + digamma(0.5 * (dof + D)) - math.log(0.5 * (dof + D))
+    val = np.sum(l - w)
+    rk = np.sum(r)
+
+    bnds = ((0.1, 200),)
+    init = (dof,)
+    res = so.minimize(GetDOF, init, args=(rk, val), jac=jac, bounds=bnds)
+    return res.x
+
 def GetLk(x, logmix, logdets, distances, D):
     val1 = logmix + gammaln((x+D)/2) - gammaln(x/2) - logdets - D * math.log(x) / 2
     val2 = 0.5 * (x + D) * np.log1p(distances/x)
@@ -170,12 +179,10 @@ def dofFunc(x, logmix, logdets, distances, D, L, k):
     val1 = logmix + gammaln((x+D)/2) - gammaln(x/2) - logdets - D * math.log(x) / 2
     val2 = 0.5 * (x + D) * np.log1p(distances/x)
     gap = val1 - val2
-    L[:, k] = gap
-    lse = np.log(np.sum(np.exp(L), axis=1))
+    L2 = np.copy(L)
+    L2[:, k] = gap
+    lse = np.log(np.sum(np.exp(L2), axis=1))
     return -np.sum(lse)
-
-    # return N * gammaln(x/2) - (N*x/2) * math.log(x/2) - (x/2) * val
-    # return N * digamma(x/2) - N * math.log(x/2) - N - val
 
 def mixStudentFit(X, K=2, maxIter=50):
     mu = np.r_[np.random.randn(1, 2), np.random.randn(1, 2)]
@@ -184,9 +191,10 @@ def mixStudentFit(X, K=2, maxIter=50):
     pi = GetPiInit(2, K)
 
     for i in range(maxIter):
+        print('{0:-^60}'.format('Iteration ' + str(i + 1)))
         r, z = EStep(X, pi, mu, sigma, dof)
         mu_new, sigma_new, pi_new, dof_new = MStep(X, r, z, dof, True)
-        print('{0:-^60}'.format('Iteration ' + str(i)))
+
         print('mu: \n', mu_new)
         print('sigma: \n', sigma_new)
         print('pi: ', pi_new)
@@ -195,7 +203,7 @@ def mixStudentFit(X, K=2, maxIter=50):
         mu = mu_new
         sigma = sigma_new
         dof = dof_new
-
+        
     return pi, mu, sigma, dof
 
 def mixGaussFit(X, K=2, maxIter=50):
@@ -220,6 +228,121 @@ def mixGaussFit(X, K=2, maxIter=50):
 
     return pi, mu, sigma
 
+def plotScatter(points):
+    true0, false0, true1, false1 = points
+    plt.axis([-5, 2, -7, 3])
+    plt.xticks(np.linspace(-5, 2, 8))
+    plt.yticks(np.linspace(-7, 3, 11))
+    plt.plot(true0[:, 0], true0[:, 1], 'bo', ls='none', fillstyle='none', label='Bankrupt')
+    if len(false0) > 0:
+        plt.plot(false0[:, 0], false0[:, 1], 'ro', ls='none', fillstyle='none')
+    plt.plot(true1[:, 0], true1[:, 1], 'b^', ls='none', fillstyle='none', label='Solvent')
+    if len(false1) > 0:
+        plt.plot(false1[:, 0], false1[:, 1], 'r^', ls='none', fillstyle='none')
+    plt.legend()
+
+def plotGauss(res):
+    mu, sigma = res[1], res[2]
+    X, Y = np.meshgrid(np.linspace(-5, 2, 100), np.linspace(-7, 3, 100))
+    Z = np.dstack((X, Y))
+    K = mu.shape[0]
+    probs = []
+    for i in range(K):
+        plt.plot(mu[i, 0], mu[i, 1], marker='x', color='r')
+        rv = ss.multivariate_normal(mu[i], sigma[i])
+        probs.append(rv.pdf(Z))
+
+    probs = np.array(probs)
+    for i in range(len(probs)):
+        levels = probs[i].min() + 0.05 * (probs[i].max() - probs[i].min())
+        plt.contour(X, Y, probs[i], levels=[levels], colors='red')
+
+def plotStudent(res):
+    mu, sigma = res[1], res[2]
+    dof = res[3]
+    K = mu.shape[0]
+    X, Y = np.meshgrid(np.linspace(-5, 2, 100), np.linspace(-7, 3, 100))
+    points = np.c_[X.ravel().reshape(-1, 1), Y.ravel().reshape(-1, 1)]
+    probs = []
+    for i in range(K):
+        plt.plot(mu[i, 0], mu[i, 1], marker='x', color='r')
+        probs_k = []
+        for j in range(len(points)):   
+            probs_k.append(pdf(points[j], mu[i], sigma[i], dof[i], sl.inv(sigma[i])))
+        probs.append(probs_k)
+
+    probs = np.array(probs).reshape(K, len(points))
+    for i in range(len(probs)):
+        levels = probs[i].min() + 0.05 * (probs[i].max() - probs[i].min())
+        plt.contour(X, Y, probs[i].reshape(X.shape), levels=[levels], colors='red')
+
+def predictFlag(X, mu, sigma, flag=1):
+    predict = []
+    rv1 = ss.multivariate_normal(mu[0], sigma[0])
+    rv2 = ss.multivariate_normal(mu[1], sigma[1])
+    for i in range(len(X)):
+        xi = X[i]
+        prob1, prob2 = rv1.pdf(xi), rv2.pdf(xi)
+        if prob1 > prob2:
+            predict.append(flag)
+        else:
+            predict.append(1 - flag)
+
+    return np.array(predict)
+
+def ErrorRate(predict, labels):
+    return 1 - np.count_nonzero(predict.ravel() == labels.ravel()) / len(predict.ravel())
+
+def CompareResult(predict, y, X):
+    true0 = []
+    false0 = []
+    true1 = []
+    false1 = []
+    for i in range(len(predict)):
+        if predict[i] == 0 and y[i] == 0:
+            true0.append(X[i])
+        elif predict[i] == 1 and y[i] == 0:
+            false0.append(X[i])
+        elif predict[i] == 1 and y[i] == 1:
+            true1.append(X[i])
+        elif predict[i] == 0 and y[i] == 1:
+            false1.append(X[i])
+    
+    return np.array(true0), np.array(false0), np.array(true1), np.array(false1)
+
+def gaussPredict(res, X, y):
+    pi = res[0]
+    mu, sigma = res[1], res[2]
+    predict = predictFlag(X, mu, sigma, 1)
+    error = ErrorRate(predict, y)
+    if error > 0.5:
+        predict = predictFlag(X, mu, sigma, 0)
+
+    return CompareResult(predict, y, X)
+
+def predictFlagStudent(X, mu, sigma, dof, flag=1):
+    predict = []
+    for i in range(len(X)):
+        xi = X[i]
+        prob1 = pdf(xi, mu[0], sigma[0], dof[0], sl.inv(sigma[0]))
+        prob2 = pdf(xi, mu[1], sigma[1], dof[1], sl.inv(sigma[1]))
+        if prob1 > prob2:
+            predict.append(flag)
+        else:
+            predict.append(1 - flag)
+
+    return np.array(predict)
+
+def studentPredict(res, X, y):
+    pi, dof = res[0], res[3]
+    mu, sigma = res[1], res[2]
+    predict = predictFlagStudent(X, mu, sigma, dof, 1)
+    error = ErrorRate(predict, y)
+    if error > 0.5:
+        predict = predictFlagStudent(X, mu, sigma, 0)
+
+    return CompareResult(predict, y, X)
+        
 # load data
 data = sio.loadmat("bankruptcy.mat")
 x = data['data'][:, 1:]
@@ -232,18 +355,22 @@ Solvent = x_train[y_train == 1]
 fig = plt.figure(figsize=(11, 5))
 fig.canvas.set_window_title("mixStudentBankruptcyDemo")
 
+# Fit Mix_Gaussian model
+res = mixGaussFit(x_train)
 plt.subplot(121)
 plt.title('14 errors using gauss (red=error)')
-plt.axis([-5, 2, -7, 3])
-plt.xticks(np.linspace(-5, 2, 8))
-plt.yticks(np.linspace(-7, 3, 11))
-plt.plot(Bankrupt[:, 0], Bankrupt[:, 1], 'bo', ls='none', fillstyle='none', label='Bankrupt')
-plt.plot(Solvent[:, 0], Solvent[:, 1], 'b^', ls='none', fillstyle='none', label='Solvent')
-plt.legend()
 
-# Fit Mix-Student model
-res = mixStudentFit(x_train)
-# res2 = mixGaussFit(x_train)
+points = gaussPredict(res, x_train, y_train)
+plotScatter(points)
+plotGauss(res)
 
+# Fit Mix_Student Model
+res2 = mixStudentFit(x_train)
+plt.subplot(122)
+plt.title('4 errors using student (red=error)')
+
+points2 = studentPredict(res2, x_train, y_train)
+plotScatter(points2)
+plotGauss(res2)
 
 plt.show()

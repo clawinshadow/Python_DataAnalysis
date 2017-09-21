@@ -2,8 +2,23 @@ import numpy as np
 import scipy.stats as ss
 
 '''
-包含MLE和MAP的EM算法，对于GMM的Fit
+包含MLE和MAP的EM算法，对于GMM的Fit.
+
+因为EM算法只保证收敛到一个局部最小值，所以千万不要忽视初始值和是否有Prior的重要性！
+初始值不一样，或者是否给一个prior，得出来的结果往往有很大的差别。
 '''
+
+def GetPiInit(P=2, K=2):
+    pi = np.random.rand(K) + P
+    return pi / np.sum(pi)
+
+def GetSigmaInit(D, P=2, K=2):
+    sigma = np.zeros((K, D, D))
+    for i in range(K):
+        a = np.random.randn(D).reshape(-1, 1)
+        randpd = np.dot(a, a.T) + np.diag((P + 0.001) * np.ones(D))
+        sigma[i] = randpd
+    return sigma
 
 def GetResponsibility(x, pi, mu, cov):
     r = []
