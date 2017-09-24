@@ -49,7 +49,9 @@ print('true w: ', w)
 
 # Fit with gradient-based method
 def NLL(X, y, w, Lambda):
-    y1 = y.reshape(-1, 1)
+    y1 = np.copy(y)
+    y1[y1 == 0] = -1
+    y1 = y1.reshape(-1, 1)
     w1 = w.reshape(-1, 1)
     logli = -np.sum(ss.norm().logcdf(y1 * np.dot(X, w1)))
     return logli + np.sum(Lambda * w1**2)
@@ -76,7 +78,7 @@ def hessian(X, y, w, Lambda):
         xi = X[i].reshape(-1, 1)
         result += val[i] * np.dot(xi, xi.T) # 与书里面的符号相反，这里算的是二阶导数
 
-    return result + np.diag(2 * Lambda * np.ones(X.shape[1])) # D * D
+    return result + np.diag(2 * Lambda * np.ones(X.shape[1]).reshape(-1, 1)) # D * D
 
 def Fit(X, y, Lambda=0.1, maxIter=50):
     w = np.zeros(X.shape[1]).reshape(-1, 1)  # init
@@ -94,10 +96,59 @@ def Fit(X, y, Lambda=0.1, maxIter=50):
             break;
 
         w = w_next
-        print('w_next: ', w)
 
     return w, np.array(NLLs)
 
-w, nlls = Fit(X, y)    
+w_gradient, nlls_gradient = Fit(X, y, lambdaVec)
 
-        
+# Fit with EM algorithm
+def EStep(X, y, w):
+    y1 = y.reshape(-1, 1)  # N * 1
+    w1 = w.reshape(-1, 1)  # D * 1
+    mu = np.dot(X, w1)     # N * 1
+
+    return mu + ss.norm().pdf(mu) / (y1 - ss.norm().cdf(-mu))
+
+def MStep(X, z, Lambda):
+    d = Lambda * np.ones(X.shape[1]).reshape(-1, 1)
+    pen = np.diag(d.ravel()) + np.dot(X.T, X)
+    w = np.dot(sl.inv(pen), np.dot(X.T, z))
+    return w
+
+def Fit_EM(X, y, Lambda=0.1, maxIter=100):
+    X_init = X + np.random.rand(X.shape[0], X.shape[1])
+    w, r1, r2, r3 = sl.lstsq(X_init, y)  # init
+    NLLs = []
+    for i in range(maxIter):
+        print('{0:-^60}'.format('Iteration: ' + str(i + 1)))
+        nll = NLL(X, y, w, Lambda)
+        NLLs.append(nll)
+        print('NLL: ', nll)
+        print('w: ', w)
+        z = EStep(X, y, w)
+        w_next = MStep(X, z, Lambda)
+        if np.allclose(w, w_next):
+            break;
+
+        w = w_next
+    return w, np.array(NLLs)
+
+y1 = np.copy(y)
+y1[y1 == -1] = 0
+w_EM, nlls_EM = Fit_EM(X, y1, lambdaVec)
+
+# plots
+fig = plt.figure()
+fig.canvas.set_window_title('probitRegDemo2')
+plt.subplot()
+plt.title('probit regression with L2 regularizer of 0.100')
+plt.xlabel('iter')
+plt.ylabel('penalized NLL')
+plt.axis([0, 120, 0, 70])
+plt.xticks(np.linspace(0, 120, 7))
+plt.yticks(np.linspace(0, 70, 8))
+plt.plot(np.arange(1, len(nlls_gradient) +1 , 1), nlls_gradient, 'k:', marker='s', fillstyle='none', label='minfunc')
+plt.plot(np.arange(1, len(nlls_EM) +1 , 1), nlls_EM, 'r-', marker='o', fillstyle='none', label='em')
+
+plt.legend()
+plt.show()
