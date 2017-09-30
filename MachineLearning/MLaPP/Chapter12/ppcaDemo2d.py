@@ -4,28 +4,29 @@ import sklearn.preprocessing as spp
 import matplotlib.pyplot as plt
 from pcaFit import *
 
+'''与书中算出来的不一样，很困惑，不知道哪里错了，看了半天无果，待以后再查'''
+
 np.random.seed(0)
-    
+
 # generate data
 n = 5
 x = np.r_[np.random.randn(n, 2) + 2 * np.ones((n, 2)),\
           2 * np.random.randn(n, 2) - 2 * np.ones((n, 2))]
 
-# Fit PCA
+# fit model
 L = 1
-mu, W, z, x_recon = PCA(x, L)
-print('W:\n', W)
+mu, W, Z, x_recon = PPCA(x, L)
+print('W: \n', W)
+print(x_recon)
 Z2 = np.array([-5, 5])
 x_recon2 = np.dot(Z2.reshape(-1, 1), W.T) + mu
-print(x_recon)
 
 # plot data
 fig = plt.figure()
-fig.canvas.set_window_title('pcaDemo2d')
+fig.canvas.set_window_title('ppcaDemo2d')
 
 plt.subplot()
 plt.axis([-5, 5, -4, 5])
-plt.axis('equal')  # 保证坐标系xlim, ylim内的图像是正方形的，两边留多少它会自己调整
 plt.xticks([-5, 0, 5])
 plt.yticks(np.linspace(-4, 5, 10))
 plt.plot(x[:, 0], x[:, 1], 'ro', mew=2, fillstyle='none')
