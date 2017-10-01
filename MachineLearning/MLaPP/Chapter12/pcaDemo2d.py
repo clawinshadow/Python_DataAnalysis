@@ -13,7 +13,7 @@ x = np.r_[np.random.randn(n, 2) + 2 * np.ones((n, 2)),\
 
 # Fit PCA
 L = 1
-mu, W, z, x_recon = PCA(x, L)
+mu, vr, W, z, x_recon = PCA(x, L)
 print('W:\n', W)
 Z2 = np.array([-5, 5])
 x_recon2 = np.dot(Z2.reshape(-1, 1), W.T) + mu

@@ -24,7 +24,7 @@ def GetR(X, pi, mu, W, psi):
     R = np.zeros((N, K))
     for i in range(K):
         mui = mu[i].ravel()
-        sigma = np.dot(W[i].T, W[i]) + psi
+        sigma = np.dot(W[i], W[i].T) + psi
         R[:, i] = pi[i] * ss.multivariate_normal(mui, sigma).pdf(X)
 
     rowsum = np.sum(R, axis=1).reshape(-1, 1)
@@ -37,23 +37,22 @@ def UpdateTheta(X, rk, mu, W, psi):
     t = np.dot(W.T, sl.inv(psi))
     gap = X - mu  # N * D
     sigma_c = sl.inv(np.eye(L) + np.dot(t, W))  # L * L
-    mu_c = np.dot(sigma_c, np.dot(t, gap.T))  # L * N
-    mu_c = mu_c.T  # N * L
-    b_c = np.c_[mu_c, np.ones((N, L))] # N * 2L
-    C_c = np.zeros((N, 2*L, 2*L))    # N * 2L
+    m_c = np.dot(sigma_c, np.dot(t, gap.T))  # L * N
+    m_c = m_c.T  # N * L
+    b_c = np.c_[m_c, np.ones((N, 1))] # N * (L + 1)
+    C_c = np.zeros((N, L+1, L+1))      # N *  L+1 * L+1
     for i in range(N):
-        mu_ic = mu_c[i].reshape(-1, 1) # L * 1
-        mat_1 = np.dot(mu_ic, mu_ic.T) # L * L
-        mat_2 = np.tile(mu_ic, L).reshape(L, L) # L * L
-        C_ic = np.c_[np.r_[mat_1, mat_2], np.r_[mat_2, np.eye(L)]] # 2L * 2L
+        m_ic = m_c[i].reshape(-1, 1)  # L * 1
+        mat_1 = np.dot(m_ic, m_ic.T)  # L * L
+        C_ic = np.c_[np.r_[mat_1, m_ic.T], np.r_[m_ic, np.ones((1, 1))]] # L+1 * L+1
         C_c[i] = C_ic
 
-    Wic = np.zeros((D, 2 * L))
-    Wic_1 = np.zeros((D, 2 * L))
-    Wic_2 = np.zeros((2 * L, 2 * L))
+    Wic = np.zeros((D, L + 1))
+    Wic_1 = np.zeros((D, L + 1))
+    Wic_2 = np.zeros((L + 1, L + 1))
     for i in range(N):
         xi = X[i].reshape(-1, 1)  # D * 1
-        Wic_1 += rk[i] * np.dot(xi, b_c[i].reshape(1, -1))  # D * 2L
+        Wic_1 += rk[i] * np.dot(xi, b_c[i].reshape(1, -1))  # D * (L + 1)
         Wic_2 += rk[i] * C_c[i]
     Wic = np.dot(Wic_1, sl.inv(Wic_2))
 
@@ -65,8 +64,8 @@ def UpdateTheta(X, rk, mu, W, psi):
 
     psi = np.diag(np.diag(psi_temp)) / N
     W_new = Wic[:, :L]  # D * L
-    mu_new = Wic[0, L:] # L * 1
-
+    mu_new = Wic[:, -1] # L * 1
+    print('Wic: \n', Wic)
     return W_new, mu_new, psi
     
 
@@ -78,6 +77,7 @@ def MStep(X, R, pi, mu, W, psi):
     psi_temp = psi
     for k in range(len(pi)):
         rk = R[:, k]
+        muk = mu[k].ravel()
         wk_new, muk_new, psi_new = UpdateTheta(X, rk, mu[k], W[k], psi_temp)
         W_new[k] = wk_new
         mu_new[k] = muk_new
@@ -88,7 +88,7 @@ def MStep(X, R, pi, mu, W, psi):
 def FitMFA(X, K=3, L=1, maxIter=100):
     N, D = X.shape
     pi = np.tile(1/K, K)
-    mu = np.random.randn(K, 1, D)
+    mu = np.random.randn(K, D)
     W = np.random.randn(K, D, L)
     psi = np.eye(D)
     for i in range(maxIter):
