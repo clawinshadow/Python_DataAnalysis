@@ -4,7 +4,16 @@ import sklearn.preprocessing as spp
 import matplotlib.pyplot as plt
 from pcaFit import *
 
-'''与书中算出来的不一样，很困惑，不知道哪里错了，看了半天无果，待以后再查'''
+'''
+要注意为什么ppca和pca的图形中不同的地方在于投影不再垂直于w的方向，就是在于 w -> z 的转化过程中，
+1. PCA是 zi = w.T * xi, 它的w是正交的，norm(w) = 1, 所以zi就是xi在w方向上的垂直投影 (简单的线性代数)
+2. 而在 PPCA 中， 算出MLE的 w 之后，虽然此时w是正交的，但还要经过一些另外的变换，最终 zi = W_after.T * xi, 此时的W_after的范数就
+不再是1了，所以PPCA中 zi 不是 xi在w方向上的垂直投影，而是都向着mean偏移，被mean吸引过去的感觉
+
+原始数据 X 是 N*D 的，假如 N>D，并且是满秩矩阵，那么X就是一个D维的线性空间
+而 W 是 N*L的，L < D， 所以 W 就是一个L维的线性子空间，一个L维的manifold，
+隐藏变量 Z 都在W形成的这个L维流形上面，这就是PCA的几何意义
+'''
 
 np.random.seed(0)
 

@@ -37,19 +37,31 @@ def PPCA(X, L=1):
     assert D >= L
     S = np.dot(x.T, x) / N
     # Fit PPCA model, 参数包括： mu, sigma2, W
-    w, vr = sl.eig(S)     # 求解S的特征值和特征向量
-    sortedIndices = np.argsort(w)[::-1] # reverse w
-    L_indices = sortedIndices[:L]       # top L
-    w = w[L_indices]                    # top L eigvals
-    vr = (vr.T[L_indices]).T            # top L eigen vectors, D * L
-    rest_w = sortedIndices[L:]  # 剩余的特征值
-    sigma2 = np.mean(rest_w)    # MLE of σ2
+    w_all, vr_all = sl.eig(S)     # 求解S的特征值和特征向量
+
+    sortedIndices = np.argsort(w_all)[::-1] # reverse w
+    L_indices = sortedIndices[:L]           # top L
+    w = w_all[L_indices]                    # top L eigvals
+    vr = (vr_all.T[L_indices]).T            # top L eigen vectors, D * L
+    rest_w = w_all[sortedIndices[L:]]       # 剩余的特征值
+    sigma2 = np.mean(rest_w)                # MLE of σ2
+    print('sigma2: ', sigma2)
     t = (np.diag(w) - sigma2 * np.eye(L)) ** 0.5
-    W = np.dot(vr, t)   # D * L
+    W = np.dot(vr, t)           # D * L
+    print('sl.norm(W): ', sl.norm(W[:, 0]))
+    
+    # !!! 注意上面的W并不是最终的W，因为它不是orthogonal的，而在PPCA的公式里面
+    # !!! W有一个先决条件就是必须是正交的，所以会有一个L*L的矩阵R乘在最后面
+    # !!! 为的就是将W正交化，所以我们下面要将W正交化才是正确的MLE
+    W = sl.orth(W)
+    print('sl.norm(W) after orthogonalization: ', sl.norm(W[:, 0]))    
 
     # Infer Latent Z : N * L，隐藏变量需要用mean=0的x来计算
     F = np.dot(W.T, W) + sigma2 * np.eye(L)
-    Z_mean = np.dot(x, np.dot(sl.inv(F), W.T).T)  # Z 是一个随机变量，这里只给出Z的均值
+    FW = np.dot(sl.inv(F), W.T) # 最终的 z -> x 的loading matrix，范数肯定不为1了，不再是正交矩阵
+    print('sl.norm(FW): ', sl.norm(FW[:, 0]))  
+    Z_mean = np.dot(x, FW.T)      # Z 是一个随机变量，这里只给出Z的均值
+    
     # Reconstruct X
     X_recon = np.dot(Z_mean, W.T) + mu
 
