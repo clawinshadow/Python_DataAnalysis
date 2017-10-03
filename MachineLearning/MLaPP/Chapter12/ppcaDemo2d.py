@@ -24,7 +24,7 @@ x = np.r_[np.random.randn(n, 2) + 2 * np.ones((n, 2)),\
 
 # fit model
 L = 1
-mu, W, Z, x_recon = PPCA(x, L)
+mu, W, Z, x_recon, s2 = PPCA(x, L)
 print('W: \n', W)
 print(x_recon)
 Z2 = np.array([-5, 5])
