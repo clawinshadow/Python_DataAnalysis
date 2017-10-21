@@ -4,26 +4,7 @@ import sklearn.preprocessing as sp
 import sklearn.metrics as sm
 import sklearn.linear_model as slm
 import matplotlib.pyplot as plt
-
-# 列出N的全部子集，总共2^N个
-# 比如3的话就是 (), (0), (1), (2), (0, 1), (1, 2), (0, 2), (0, 1, 2)
-def subsets(N):
-    maxIter = 2**N
-    result = dict()
-    for i in range(maxIter):
-        b = bin(i)
-        s = str(b)[2:]
-        s = s.rjust(N, '0') # ensure the length is N
-        arr = np.array([(int)(x) for x in s])  # e.g. [1, 1, 0, 1, 0]
-        count = np.count_nonzero(arr)          # 3
-        indices = tuple(np.nonzero(arr)[0])    # (0, 1, 3)
-        if count in result:
-            result[count].add(indices)
-        else:
-            result[count] = set()
-            result[count].add(indices)
-
-    return result
+from subsets import *
 
 # prepare data
 data = sio.loadmat('prostate.mat')
@@ -74,7 +55,7 @@ plt.yticks(np.linspace(0.4, 1.4, 6))
 for k, v in mses.items():
     count = len(v)
     xs = np.tile(k, count)
-    plt.plot(xs, v, color='midnightblue', marker='o', mec='none', linestyle='none')
+    plt.plot(xs, v, color='midnightblue', marker='o', ms=4, mec='none', linestyle='none')
 
 plt.plot(list(models.keys()), min_mses, 'ro-', mec='r', lw=2)
 
