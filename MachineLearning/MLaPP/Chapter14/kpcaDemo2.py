@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 '''
 书中的这个示例是有问题的，kpca的图形在matlab code中也无法重现
-并且matlab code中画kpca的代码非常奇怪，本例中是使用sklearn画的, 看上去还合理一点
+并且matlab code中画kpca的代码非常奇怪，本例中是使用sklearn画的, 看上去跟书里面的完全吻合
 '''
 
 # load data
@@ -15,7 +15,7 @@ print(data.keys())
 X = data['patterns']
 print(X.shape)
 N, D = X.shape
-rbf_var = 0.1
+rbf_var = 0.01
 
 # reconstruct with PCA
 pca = sd.PCA(D).fit(X)
