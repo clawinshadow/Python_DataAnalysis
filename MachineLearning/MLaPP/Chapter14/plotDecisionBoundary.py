@@ -4,6 +4,8 @@ import sklearn.preprocessing as spp
 import matplotlib.pyplot as plt
 
 '''
+slightly different with in books, coz the algorithm details is a bit different between sklearn & pmtk
+
 Used for plot decision boundary of classification problems, briefly 2 steps:
 1. plot the boundary using plt.contour(), just one line in binary classification problem
 2. fill color in the 2 regions, by plot massive points with different colors, looks like a filled color region finally
@@ -46,17 +48,18 @@ def GridPredict(dataRange, resolution, model, preprocessFunc, **kwargs):
         scaler = kwargs['scaler']
         zs = scaler.transform(zs)
     # 3. kernel or poly
-    if preprocessFunc.__name__ == 'rbf_kernel':
-        rbf_scale = kwargs['rbfscale']
-        centers = kwargs['centers']
-        gamma = 1 / (2 * rbf_scale ** 2)
-        zs_test = smp.rbf_kernel(zs, centers, gamma=gamma)  # kernelise
-        zs_test = zs_test / np.sqrt(2 * np.pi * rbf_scale ** 2)
-    if preprocessFunc.__name__ == 'poly':
-        deg = kwargs['deg']
-        zs_test = preprocessFunc(zs, deg)
+    if preprocessFunc != 'none':
+        if preprocessFunc.__name__ == 'rbf_kernel':
+            rbf_scale = kwargs['rbfscale']
+            centers = kwargs['centers']
+            gamma = 1 / (2 * rbf_scale ** 2)
+            zs = smp.rbf_kernel(zs, centers, gamma=gamma)  # kernelise
+            zs = zs / np.sqrt(2 * np.pi * rbf_scale ** 2)
+        if preprocessFunc.__name__ == 'poly':
+            deg = kwargs['deg']
+            zs = preprocessFunc(zs, deg)
 
-    zz = model.predict(zs_test)
+    zz = model.predict(zs)
     zz = zz.reshape(xx.shape)
     print(np.count_nonzero(zz == 1))
 
@@ -96,7 +99,15 @@ def plot(X, y, model, preprocessFunc, **kwargs):
              marker='.', ms=0.1, color=colors[1], linestyle='none')
     plt.contour(xx_grid, yy_grid, zz_grid, colors='k', linewidths=2)
     plt.plot(X[y == classes[0]][:, 0], X[y == classes[0]][:, 1], marker=markers[0],\
-             color=marker_colors[0], fillstyle='none', linestyle='none')
+             color=marker_colors[0], mew=2, fillstyle='none', linestyle='none')
     plt.plot(X[y == classes[1]][:, 0], X[y == classes[1]][:, 1], marker=markers[1],\
-             color=marker_colors[1], fillstyle='none', linestyle='none')
+             color=marker_colors[1], mew=2, fillstyle='none', linestyle='none')
+
+    if 'drawSV' in kwargs:
+        if 'svIndices' in kwargs:
+            SV_indices = kwargs['svIndices']
+        else:
+            SV_indices = np.abs(model.coef_) > 1e-5
+        SV = X[SV_indices.ravel()]  # support vectors
+        plt.plot(SV[:, 0], SV[:, 1], 'ko', ms=10, mew=1, linestyle='none', fillstyle='none')
 

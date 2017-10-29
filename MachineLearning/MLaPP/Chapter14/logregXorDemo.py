@@ -64,7 +64,7 @@ fig.canvas.set_window_title('logregXorDemo')
 
 args1 = dict(subplotIndex=121, deg=10, title='poly10', tickRange=[0, 6, -1, 7], scaler=scaler)
 plot(X, y, LG, poly, **args1)
-args2 = dict(title='rbf prototypes', tickRange=[0, 6, -1, 7], scaler=sscaler, factor=factor, \
+args2 = dict(title='rbf prototypes', tickRange=[0, 6, -1, 7], sscaler=sscaler, factor=factor, \
             centers=centers, rbfscale=rbf_scale, subplotIndex=122)
 plot(X, y, LG2, smp.rbf_kernel, **args2)
 
