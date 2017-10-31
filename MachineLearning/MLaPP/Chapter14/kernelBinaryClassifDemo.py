@@ -2,6 +2,7 @@ import h5py
 import numpy as np
 import sklearn.svm as svm
 import sklearn.linear_model as slm
+import sklearn.metrics as sm
 import sklearn.metrics.pairwise as smp
 import sklearn.model_selection as sms
 import sklearn.preprocessing as spp
@@ -54,6 +55,9 @@ print('nerr of L1VM: ', nerr_L1)
 #print('alpha of priors: ', ARD.lambda_)
 
 # Fit with SVM CV
+def one_zero_loss(ground_truth, predictions):
+    return np.mean(ground_truth != predictions)
+
 scaler = spp.StandardScaler().fit(X)
 x_standard = scaler.transform(X)
 N, D = X.shape
@@ -61,21 +65,21 @@ factor = np.sqrt((N - 1) / N)
 x_standard = x_standard * factor
 print(x_standard)
 K = 5
+kf = sms.KFold(n_splits=K, shuffle=False)
+loss = sm.make_scorer(one_zero_loss, greater_is_better=True)
 Cs = 2**(np.linspace(-5, 5, 10))
 scoreMat = np.zeros((len(Cs), K))
 for i in range(len(Cs)):
     Ci = Cs[i]
-    SVC = svm.SVC(Ci, gamma=gamma)
-    scoreMat[i] = sms.cross_val_score(SVC, x_standard, y, cv=K)
-
-print(scoreMat)
+    SVC = svm.SVC(Ci, gamma=gamma, shrinking=False)
+    scoreMat[i] = sms.cross_val_score(SVC, x_standard, y, cv=kf, scoring=loss)
 
 scores = np.mean(scoreMat, axis=1)
-bestIndex = np.argmax(scores)
+bestIndex = np.argmin(scores)
 print(bestIndex)
 C_best = Cs[bestIndex]
 
-svc = svm.SVC(C=C_best, gamma=gamma).fit(x_standard, y)
+svc = svm.SVC(C=C_best, gamma=gamma, shrinking=False).fit(x_standard, y)
 print('support vectors number: ', svc.n_support_)
 y_predict_svc = svc.predict(x_standard)
 nerr_svc = np.count_nonzero(y_predict_svc == y)
