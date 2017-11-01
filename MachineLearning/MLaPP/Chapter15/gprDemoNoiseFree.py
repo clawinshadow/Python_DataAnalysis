@@ -5,6 +5,7 @@ import sklearn.metrics.pairwise as smp
 import sklearn.gaussian_process as sgp
 import sklearn.gaussian_process.kernels as kernels
 import matplotlib.pyplot as plt
+from GPR_Algorithm import *
 
 '''
 GPR 里面的 predict() 方法要慎用，它返回的不是posterior mean..
@@ -33,15 +34,22 @@ print(Ks.shape)
 Kss = smp.rbf_kernel(xtest, xtest, gamma=0.5)    # 101 * 101
 post_sigma = Kss - np.dot(Ks.T, np.dot(sl.inv(K), Ks))
 post_mu = np.dot(Ks.T, np.dot(sl.inv(K), ytrain.reshape(-1, 1))).ravel()  # 101 * 1
-print('post_mu by self: ', post_mu)  # same with in matlab codes
+print('post_mu by self: \n', post_mu)  # same with in matlab codes
 post_samples = ss.multivariate_normal(post_mu, post_sigma, allow_singular=True).rvs(3)
 std = np.sqrt(np.diag(post_sigma))
+print('post_variance by self: \n', std)
+
+# Fit with GPR_Algorithm
+K2 = smp.rbf_kernel(xtrain, gamma=0.5)
+p_mu, p_var, ll = fit_gpr(K2, Ks, Kss, ytrain, noise_sigma=alpha)
+print('post_mu by numerical stable method: \n', p_mu.ravel())
+print('post_variance by ...: \n', np.sqrt(np.diag(p_var)))
 
 # Fit with sklearn.GP
 kernel = 1.0 * kernels.RBF(length_scale=1.0) + 1.0 * kernels.WhiteKernel(noise_level=alpha)
 GP = sgp.GaussianProcessRegressor(kernel=kernel, alpha=0.0).fit(xtrain, ytrain)
 y_predict = GP.predict(xtest)  # be careful to use predict..
-print('post_mu by sklearn.GP: ', y_predict.ravel())
+# print('post_mu by sklearn.GP: ', y_predict.ravel())
 
 # plot prior
 fig = plt.figure(figsize=(12, 5))
