@@ -5,10 +5,10 @@ import scipy.linalg as sl
 numerical stable method to calculate GPR using Cholesky Decomposition
 '''
 
-def fit_gpr(K, Ks, Kss, y, noise_sigma):
+def fit_gpr(K, Ks, Kss, y):
     y = y.reshape(-1, 1)
     N = len(K)
-    Ky = K + (noise_sigma**2) * np.eye(N)
+    Ky = K
     L = sl.cholesky(Ky, lower=True)
     L_inv = sl.inv(L)  # inverse of lower triangular matrix, numeric stable
     alpha = np.dot(L_inv.T, np.dot(L_inv, y))  # N * 1

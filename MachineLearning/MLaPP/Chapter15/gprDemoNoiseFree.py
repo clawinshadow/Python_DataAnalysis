@@ -40,8 +40,7 @@ std = np.sqrt(np.diag(post_sigma))
 print('post_variance by self: \n', std)
 
 # Fit with GPR_Algorithm
-K2 = smp.rbf_kernel(xtrain, gamma=0.5)
-p_mu, p_var, ll = fit_gpr(K2, Ks, Kss, ytrain, noise_sigma=alpha)
+p_mu, p_var, ll = fit_gpr(K, Ks, Kss, ytrain)
 print('post_mu by numerical stable method: \n', p_mu.ravel())
 print('post_variance by ...: \n', np.sqrt(np.diag(p_var)))
 
