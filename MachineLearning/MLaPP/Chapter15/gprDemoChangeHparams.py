@@ -5,16 +5,6 @@ import sklearn.metrics.pairwise as smp
 import matplotlib.pyplot as plt
 from GPR_Algorithm import *
 
-# squared-exponential (SE) kernel for the noisy observations
-def SE(X, Y, v_scale, h_scale, noise_sigma):
-    N, D = X.shape
-    gamma = 1 / (2 * h_scale**2)
-    gram = (v_scale**2) * smp.rbf_kernel(X, Y, gamma=gamma)
-    if len(X) == len(Y):
-        gram += (noise_sigma**2) * np.eye(N)
-
-    return gram
-
 # prepare data
 data = sio.loadmat('gprDemoChangeHparams.mat')
 print(data.keys())
