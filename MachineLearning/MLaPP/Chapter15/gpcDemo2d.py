@@ -212,10 +212,3 @@ plot(122, optimalStr, probs_sklearn)  # 图形几乎是一样的，只不过参�
 
 plt.tight_layout()
 plt.show()
-
-
-
-
-
-
-
