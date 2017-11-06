@@ -29,7 +29,7 @@ def sample(x, aw1, ab1, aw2, ab2):
     w1 = ss.multivariate_normal(mu1, cov1).rvs(N_samples)
     b1 = ss.multivariate_normal(mu2, cov2).rvs(N_samples)
     w2 = ss.multivariate_normal(mu3, cov3).rvs(N_samples)
-    b2 = ss.norm(mu4, cov4).rvs(N_samples)
+    b2 = ss.norm(mu4, np.sqrt(cov4)).rvs(N_samples)
 
     N, D = x.shape
     y = np.zeros((N_samples, N))
