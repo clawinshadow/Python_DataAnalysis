@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.linalg as sl
+import scipy.sparse as spa
 
 '''
 Refer to Page.597
@@ -80,8 +81,16 @@ def powermethod(G):
     Z = np.select(condition, choices2)
     I = np.ones(N).reshape(-1, 1)
 
-    M = p * np.dot(G, D) + np.dot(I, Z.reshape(1, -1))
-    print(M)
+    # use sparse matrix instead, or it will probably exhaust memory
+    G_csr = spa.csr_matrix(G)
+    D_csr = spa.csr_matrix(D)
+    I_csr = spa.csr_matrix(I)
+    Z_csr = spa.csr_matrix(Z.reshape(1, -1))
+
+    # M = p * np.dot(G, D) + np.dot(I, Z.reshape(1, -1))
+    M = p * np.dot(G_csr, D_csr) + np.dot(I_csr, Z_csr)
+    M = M.toarray()
+    # print(M)
 
     maxIter = 50
     pi = np.tile(1/N, N).reshape(-1, 1)
@@ -92,7 +101,7 @@ def powermethod(G):
             print('Converged!')
             break
 
-        print(pi_new.ravel())
+        # print(pi_new.ravel())
         pi = pi_new
 
     return pi.ravel()
@@ -123,4 +132,4 @@ def Demo():
     pi = powermethod(G)  # 这个才是对的，与书里面的一致
     print(pi)
 
-Demo()
+# Demo()
