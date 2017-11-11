@@ -1,9 +1,9 @@
 import numpy as np
 import scipy.io as sio
-import scipy.linalg as sl
 import matplotlib.pyplot as plt
 from hmmFilter import *
 from hmmFwdBack import *
+from hmmViterbi import *
 
 # load data
 data = sio.loadmat('casinoDemo.mat')
@@ -23,6 +23,7 @@ gray = hidden == 2
 # Fit with Filter, Smoothing and Viterbi
 Z1 = hmm_filter(observed, transMat, obsModel, pi)
 Z2 = hmm_smoothing(observed, transMat, obsModel, pi)
+Z3 = hmm_viterbi(observed, transMat, obsModel, pi)
 
 # plots
 fig = plt.figure(figsize=(13, 4))
@@ -40,10 +41,15 @@ def plot(index, title, data):
     plt.xticks(np.linspace(0, 300, 7))
     plt.yticks(np.linspace(0, 1, 3))
     plt.vlines(x[gray.ravel()], 0, 1, colors='silver')
-    plt.plot(x, data[:, 1], color='midnightblue', lw=2)
+    if data.ndim == 1:
+        plt.plot(x, data, color='midnightblue', lw=2)
+    else:
+        plt.plot(x, data[:, 1], color='midnightblue', lw=2)
 
 plot(131, 'filtered', Z1)
 plot(132, 'smoothed', Z2)
+plot(133, 'Viterbi', Z3.ravel())
+plt.ylabel('MAP state (0=fair,1=loaded)')
 
 plt.tight_layout()
 plt.show()
