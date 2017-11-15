@@ -3,6 +3,7 @@ import scipy.io as sio
 import scipy.stats as ss
 import scipy.linalg as sl
 import matplotlib.pyplot as plt
+from kalmanSmooth import *
 
 '''
 State Space Model, SSM, this demo is specially for LG-SSM, that is Linear-Gaussian SSM, or a LDS, 
@@ -40,72 +41,6 @@ In kalman filter & kalman smoothing, parameters θt are all known, we just infer
                   refer to Page.675
 '''
 
-def kalman_smoothing(y, A, C, Q, R, init_mu, init_V):
-    init_mu = init_mu.reshape(-1, 1)
-    K = len(init_mu)  # dimension of hidder state
-    N, D = y.shape
-    smooth_mus = np.zeros((N, K))
-    smooth_covs = np.zeros((N, K, K))
-    # forwards algorithm
-    filter_mus, filter_covs = kalman_filter(y, A, C, Q, R, init_mu, init_V)
-
-    smooth_mus[-1] = filter_mus[-1]
-    smooth_covs[-1] = filter_covs[-1]
-    # tracing backwards
-    for i in range(N - 2, -1, -1):
-        msmooth_future = smooth_mus[i + 1].reshape(-1, 1)
-        Vsmooth_future = smooth_covs[i + 1]
-        mfilt = filter_mus[i].reshape(-1, 1)          # μt
-        Vfilt = filter_covs[i]                        # Σt
-        mfilt_pre = np.dot(A, mfilt)                  # μ(t+1|t)
-        Vfilt_pre = np.dot(A, np.dot(Vfilt, A.T)) + Q # Σ(t+1|t)
-
-        J = np.dot(Vfilt, np.dot(A.T, sl.inv(Vfilt_pre)))
-        smooth_mu = mfilt + np.dot(J, (msmooth_future - mfilt_pre))
-        smooth_cov = Vfilt + np.dot(J, np.dot((Vsmooth_future - Vfilt_pre), J.T))
-
-        smooth_mus[i] = smooth_mu.ravel()
-        smooth_covs[i] = smooth_cov
-
-    return smooth_mus, smooth_covs
-
-def kalman_filter(y, A, C, Q, R, init_mu, init_V):
-    '''
-    ignore control signal B, D, u
-    A should be a square matrix K * K, C should be a transform matrix D * K
-    Q.shape = A.shape, R.shape: D * D
-    '''
-
-    init_mu = init_mu.reshape(-1, 1)
-    K = len(init_mu)   # dimension of hidder state
-    N, D = y.shape
-    mus = np.zeros((N, K))
-    covs = np.zeros((N, K, K))
-    for i in range(N):
-        if i == 0:
-            pre_mu = init_mu
-            pre_cov = init_V
-            mpred = pre_mu
-            vpred = pre_cov
-        else:
-            pre_mu = mus[i - 1].reshape(-1, 1)      # μ(t-1)
-            pre_cov = covs[i - 1]                   # Σ(t-1)
-            mpred = np.dot(A, pre_mu)                    # μ(t|t-1)
-            vpred = np.dot(A, np.dot(pre_cov, A.T)) + Q  # Σ(t|t-1)
-
-        yi = y[i].reshape(-1, 1)
-        ye = np.dot(C, mpred)                       # D * 1
-        r = yi - ye                                 # D * 1
-        S = np.dot(C, np.dot(vpred, C.T)) + R       # D * D
-        KM = np.dot(vpred, np.dot(C.T, sl.inv(S)))  # K * D
-        new_mu = mpred + np.dot(KM, r)              # K * 1
-        new_cov = np.dot(np.eye(K) - np.dot(KM, C), vpred)  # K * K
-
-        mus[i] = new_mu.ravel()
-        covs[i] = new_cov
-
-    return mus, covs
-
 # load data
 data = sio.loadmat('kalmanTrackingDemo.mat')
 print(data.keys())
@@ -116,7 +51,7 @@ x = x.T
 y = y.T
 K = x.shape[1]
 D = y.shape[1]
-xx, yy = np.meshgrid(np.linspace(6, 23, 100), np.linspace(3, 15, 100))
+xx, yy = np.meshgrid(np.linspace(6, 23, 200), np.linspace(3, 15, 200))
 xtest = np.c_[xx.ravel(), yy.ravel()]
 
 # Fit with kalman filter & smoothing
