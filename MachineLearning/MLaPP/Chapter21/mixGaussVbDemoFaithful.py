@@ -75,8 +75,13 @@ def draw2(ax, lowerbounds):
     N = len(lowerbounds)
     return ax.plot(np.linspace(1, N, N), lowerbounds, 'o-', color='midnightblue', lw=1, fillstyle='none')
 
+def draw3(ax, params):
+    alpha = params['alpha'].ravel()
+    K = len(alpha)
+    return ax.bar(np.linspace(1, K, K), alpha, color='midnightblue', edgecolor='none', align='center')
+
 class SeqUpdate(object):
-    def __init__(self, ax1, ax2, X, params, lbs):
+    def __init__(self, ax1, ax2, ax3, X, params, lbs):
         self.params = params
         self.X = X
         self.lbs = lbs
@@ -89,7 +94,7 @@ class SeqUpdate(object):
         self.ax1.tick_params(direction='in')
 
         self.ax2 = ax2
-        self.ax2.set_title('variational Bayes objective for GMM on old faithful data', fontdict={'fontsize': 5})
+        self.ax2.set_title('variational Bayes objective for GMM on old faithful data', fontdict={'fontsize': 10})
         self.ax2.set_ylabel('ower bound on log marginal likelihood')
         self.ax2.set_xlabel('iter')
         self.ax2.set_xlim(0, 100)
@@ -98,12 +103,20 @@ class SeqUpdate(object):
         self.ax2.set_yticks(np.linspace(-1100, -600, 11))
         self.ax2.tick_params(direction='in')
 
+        self.ax3 = ax3
+        self.ax3.set_xlim(0, 7)
+        self.ax3.set_xticks(np.linspace(0, 6, 7))
+        self.ax3.tick_params(direction='in')
+
     def __call__(self, i):
         self.ax1.clear()
+        self.ax3.clear()
         self.ax1.set_title('Iteration: {0}'.format(i + 1))
+        self.ax3.set_title('Iteration: {0}'.format(i + 1))
 
         artists = draw(self.ax1, self.X, params[i])
         artists.append(draw2(self.ax2, self.lbs[:i+1]))
+        artists.append(draw3(self.ax3, params[i]))
 
         return artists
 
@@ -133,13 +146,14 @@ params = res[0]
 lowerbounds = res[1]
 
 # plots
-fig = plt.figure(figsize=(10.5, 5))
+fig = plt.figure(figsize=(16, 5))
 fig.canvas.set_window_title('mixGaussVbDemoFaithful')
 
-ax1 = plt.subplot(121)
-ax2 = plt.subplot(122)
+ax1 = plt.subplot(131)
+ax2 = plt.subplot(132)
+ax3 = plt.subplot(133)
 
-su = SeqUpdate(ax1, ax2, X, params, lowerbounds)
+su = SeqUpdate(ax1, ax2, ax3, X, params, lowerbounds)
 anim = ma.FuncAnimation(fig, su, frames=len(params), interval=500, repeat=False)
 
 plt.tight_layout()
