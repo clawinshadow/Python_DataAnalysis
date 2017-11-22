@@ -20,6 +20,7 @@ xs = np.linspace(0, 10, 200)
 alpha = 5.7
 lambda_ = 2
 k = np.floor(alpha)
+# equation 23.16
 M = ss.gamma.pdf(alpha - k, a=alpha, loc=0, scale=1/lambda_) / ss.gamma.pdf(alpha - k, a=k, loc=0, scale=1/(lambda_-1))
 print(M)
 px = ss.gamma.pdf(xs, a=alpha, loc=0, scale=1/lambda_)
