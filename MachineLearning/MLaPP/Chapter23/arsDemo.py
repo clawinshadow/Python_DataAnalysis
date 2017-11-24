@@ -13,7 +13,7 @@ def arsComputeHulls(S, fS, domain):
     lowerHull = []
     for i in range(N - 1):
         lh = dict()
-        lh['m'] = (fS[i + 1] - fS[i]) / (S[i + 1] - S[i])    # 近似点S[i]处的切线的斜率，即导数
+        lh['m'] = (fS[i + 1] - fS[i]) / (S[i + 1] - S[i])    # 两点之间的斜率
         lh['b'] = fS[i] - lh['m'] * S[i]  # 截距
         lh['left'] = S[i]
         lh['right'] = S[i + 1]
@@ -21,8 +21,8 @@ def arsComputeHulls(S, fS, domain):
 
     upperHull = []
     uh = dict()
-    uh['m'] = (fS[1] - fS[0]) / (S[1] - S[0])    # left boundary 处的导数
-    uh['b'] = fS[0] - uh['m'] * S[0]             # 截距
+    uh['m'] = (fS[1] - fS[0]) / (S[1] - S[0])
+    uh['b'] = fS[0] - uh['m'] * S[0]
     uh['left'] = domain[0]
     uh['right'] = S[0]
     uh['pr'] = np.exp(uh['b']) * (np.exp(uh['m'] * S[0]) - 0) / uh['m']   # integrating from -inf, 相当于cdf
