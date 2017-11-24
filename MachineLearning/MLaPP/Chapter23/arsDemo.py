@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 '''
 Adaptive Rejection Sampling, ARS, 是rejection sampling的一个特殊形式，只能用于log concave的概率分布p(x)
 
-half gaussian是有问题的，matlab的code一样报错，后续待查
+half gaussian中matlab的code是会报错的，有bug，但是我fix掉了，霍霍霍，具体的算法解释请看arsExplanation.jpg
 '''
 
 def arsComputeHulls(S, fS, domain):
@@ -71,13 +71,15 @@ def arsComputeHulls(S, fS, domain):
     uh['pr'] = np.exp(uh['b']) * (np.exp(uh['m'] * S[-1]) - np.exp(uh['m'] * S[-2])) / uh['m']
     upperHull.append(uh)
 
-    uh = dict()
-    uh['m'] = (fS[-1] - fS[-2]) / (S[-1] - S[-2])  # right boundary 处的导数
-    uh['b'] = fS[-1] - uh['m'] * S[-1]  # 截距
-    uh['left'] = S[-1]
-    uh['right'] = domain[1]
-    uh['pr'] = np.exp(uh['b']) * (0 - np.exp(uh['m'] * S[-1])) / uh['m']  # integrating from -inf, 相当于cdf
-    upperHull.append(uh)
+    # fix bug in matlab codes, this will cause the sampling of half-gaussian failed
+    if domain[1] != S[-1]:
+        uh = dict()
+        uh['m'] = (fS[-1] - fS[-2]) / (S[-1] - S[-2])  # right boundary 处的导数
+        uh['b'] = fS[-1] - uh['m'] * S[-1]  # 截距
+        uh['left'] = S[-1]
+        uh['right'] = domain[1]
+        uh['pr'] = np.exp(uh['b']) * (0 - np.exp(uh['m'] * S[-1])) / uh['m']  # integrating from -inf, 相当于cdf
+        upperHull.append(uh)
 
     Z = sum(d['pr'] for d in upperHull)
     for d in upperHull:
@@ -218,15 +220,14 @@ plt.yticks(np.linspace(0, 700, 8))
 plt.hist(samples, bins=100, normed=False, edgecolor='k')
 
 plt.tight_layout()
-plt.show()
 
-'''
 # half gaussian
 a = -2
 b = 0
 domain = [-np.inf, 0]
-nSamples = 20000
+nSamples = 30000
 sigma = 3
+xs = np.linspace(-8, 8, 300)
 ys = np.exp(halfGaussian(xs, sigma))
 samples = ars(halfGaussian, a, b, domain, nSamples, sigma)
 
@@ -236,19 +237,18 @@ fig2.canvas.set_window_title('ARS demo of half Gaussian')
 ax1 = plt.subplot(121)
 ax1.tick_params(direction='in')
 plt.title('f(x) half gaussian')
-plt.axis([-3, 3, 0, 1])
-plt.xticks(np.linspace(-3, 3, 7))
-plt.yticks(np.linspace(0, 1, 6))
+plt.axis([-8.3, 8.3, 0, 1])
+plt.xticks(np.linspace(-8, 8, 9))
+plt.yticks(np.linspace(0, 1, 11))
 plt.plot(xs, ys, '-')
 
 ax2 = plt.subplot(122)
 ax2.tick_params(direction='in')
 plt.title('samples from f(x) by ARS')
-plt.axis([-3, 3, 0, 700])
-plt.xticks(np.linspace(-3, 3, 7))
-plt.yticks(np.linspace(0, 700, 8))
+plt.axis([-8.3, 8.3, 0, 1050])
+plt.xticks(np.linspace(-8, 8, 9))
+plt.yticks(np.linspace(0, 1000, 11))
 plt.hist(samples, bins=100, normed=False, edgecolor='k')
 
 plt.tight_layout()
 plt.show()
-'''
