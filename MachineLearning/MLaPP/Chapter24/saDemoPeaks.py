@@ -103,10 +103,32 @@ plt.xticks(np.linspace(0, 1000, 6))
 plt.title('energy vs iteration')
 plt.plot(np.linspace(1, NSamples, NSamples), energies, '-', lw=1)
 
+'''
+# matplotlib中并没有原生的histogram3d方法，自己写的这个bar3d不仅没法使用jet的cmap，并且画起来特别慢。。100个bins都得花几十秒
+# 还是matlab中的hist3方法高效的多，也漂亮的多
+def histogram3d(index, data, titleStr):
+    ax = fig2.add_subplot(2, 2, index, projection='3d')
+    ax.set_title(titleStr)
+    hist, xedges, yedges = np.histogram2d(data[:, 0], data[:, 1], bins=100)
+
+    xpos, ypos = np.meshgrid(xedges[:-1] + 0.5, yedges[:-1] + 0.5)
+    xpos = xpos.flatten('F')
+    ypos = ypos.flatten('F')
+    zpos = np.zeros_like(xpos)
+
+    dx = 1 * np.ones_like(zpos)
+    dy = dx.copy()
+    dz = hist.flatten()
+
+    ax.bar3d(xpos, ypos, zpos, dx, dy, dz, cmap='jet')
+
+sample1 = samples[:550]
+sample2 = samples
+titleStr1 = 'iter {0}, temp {1:.3f}'.format(550, temps[549])
+titleStr2 = 'iter {0}, temp {1:.3f}'.format(1000, temps[-1])
+histogram3d(3, sample1, titleStr1)
+histogram3d(4, sample2, titleStr2)
+'''
+
 plt.tight_layout()
 plt.show()
-
-
-
-
-
